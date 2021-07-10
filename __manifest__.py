@@ -25,7 +25,7 @@
     "description": """ Smart System Ar """,
     'author': " Solutions Pvt. Ltd.",
     'website': "pritech",
-    'depends': ['web', 'point_of_sale','sale'],
+    'depends': ['web', 'point_of_sale', 'product', 'sale'],
     'data': [
         'security/ir.model.access.csv',
         'data/product.xml',

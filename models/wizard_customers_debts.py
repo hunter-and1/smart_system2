@@ -25,7 +25,6 @@ from odoo import models, fields, api, tools, _
 class PrintCustomersDebts(models.TransientModel):
     _name = "wizard.customers.debts"
 
-    @api.multi
     def print_customers_debts(self):
         data = self.read()[0]
         datas = {

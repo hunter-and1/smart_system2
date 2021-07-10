@@ -2,35 +2,35 @@
 <openerp>
 	<data>
 
-		<record id="aspl_view_pos_config_form" model="ir.ui.view">
-			<field name="name">pos.config.form.view.inherit</field>
-			<field name="model">pos.config</field>
-			<field name="inherit_id" ref="point_of_sale.view_pos_config_form"/>
-			<field name="arch" type="xml">
-                <group name="features" position="after">
-                    <group name="smart_system2" string="Smart System" col="4">
-                        <field name="enable_pricelist"/>
-                        <field name="enable_add_product"/>
-                        <field name="enable_order_note"/>
-                        <field name="enable_product_note"/>
-                        <field name="enable_cart_detail"/>
-                        <field name="enable_debit"/>
-                        <field name="debt_dummy_product_id" attrs="{'invisible':[('enable_debit','!=',True)],
-                        'required':[('enable_debit','==',True)]}"/>
-                        <field name="paid_amount_product" attrs="{'invisible':[('enable_order_list','!=',True)],
-                        'required':[('enable_order_list','==',True)]}" />
-                        <field name="enable_show_qty_on_pos"/>
-                        <field name="enable_show_cost_price"/>
-                        <field name="enable_margin"/>
-                        <field name="enable_multi_sale_location"/>
-                        <field name="last_days"/>
-                        <field name="record_per_page"/>
-                        <field name="enable_order_list"/>
-                        <field name="enable_product_sync"/>
-                    </group>
-                </group>
-            </field>
-        </record>
+		<!--<record id="aspl_view_pos_config_form" model="ir.ui.view">-->
+			<!--<field name="name">pos.config.form.view.inherit</field>-->
+			<!--<field name="model">pos.config</field>-->
+			<!--<field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>-->
+			<!--<field name="arch" type="xml">-->
+                <!--<xpath expr="div[last()]" position="after">-->
+                    <!--<group name="smart_system2" string="Smart System" col="4">-->
+                        <!--<field name="enable_pricelist"/>-->
+                        <!--<field name="enable_add_product"/>-->
+                        <!--<field name="enable_order_note"/>-->
+                        <!--<field name="enable_product_note"/>-->
+                        <!--<field name="enable_cart_detail"/>-->
+                        <!--<field name="enable_debit"/>-->
+                        <!--<field name="debt_dummy_product_id" attrs="{'invisible':[('enable_debit','!=',True)],-->
+                        <!--'required':[('enable_debit','==',True)]}"/>-->
+                        <!--<field name="paid_amount_product" attrs="{'invisible':[('enable_order_list','!=',True)],-->
+                        <!--'required':[('enable_order_list','==',True)]}" />-->
+                        <!--<field name="enable_show_qty_on_pos"/>-->
+                        <!--<field name="enable_show_cost_price"/>-->
+                        <!--<field name="enable_margin"/>-->
+                        <!--<field name="enable_multi_sale_location"/>-->
+                        <!--<field name="last_days"/>-->
+                        <!--<field name="record_per_page"/>-->
+                        <!--<field name="enable_order_list"/>-->
+                        <!--<field name="enable_product_sync"/>-->
+                    <!--</group>-->
+                <!--</xpath>-->
+            <!--</field>-->
+        <!--</record>-->
 
         <record id="aspl_order_inherited_form_view" model="ir.ui.view">
             <field name="name">pos.order.inherited.view</field>
@@ -52,23 +52,23 @@
             <field name="model">account.journal</field>
             <field name="inherit_id" ref="point_of_sale.view_account_journal_pos_user_form"/>
             <field name="arch" type="xml">
-                <field name="journal_user" position="after">
-                    <field name="debt" attrs="{'invisible': [('journal_user', '=', False)]}"/>
+                <field name="company_id" position="after">
+                    <field name="debt"/>
                 </field>
             </field>
         </record>
 
-        <record id="view_debt_sale_config_settings_form_pos" model="ir.ui.view">
-            <field name="name">pos.config.settings.form</field>
-            <field name="model">pos.config.settings</field>
-            <field name="inherit_id" ref="point_of_sale.pos_config_settings_view_form"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='module_pos_reprint']" position="after">
-                    <field name="debt_type" widget="radio"/>
-                    <field name="debt_limit" class="oe_inline"/>
-                </xpath>
-            </field>
-        </record>
+        <!--<record id="view_debt_sale_config_settings_form_pos" model="ir.ui.view">-->
+            <!--<field name="name">pos.config.settings.form</field>-->
+            <!--<field name="model">pos.config.settings</field>-->
+            <!--<field name="inherit_id" ref="point_of_sale.pos_config_settings_view_form"/>-->
+            <!--<field name="arch" type="xml">-->
+                <!--<xpath expr="//field[@name='module_pos_reprint']" position="after">-->
+                    <!--<field name="debt_type" widget="radio"/>-->
+                    <!--<field name="debt_limit" class="oe_inline"/>-->
+                <!--</xpath>-->
+            <!--</field>-->
+        <!--</record>-->
 
         <record id="product_template_form_view" model="ir.ui.view">
             <field name="name">product.template.form.debt</field>
@@ -97,9 +97,9 @@
         <record id="res_users_form_view_inherit" model="ir.ui.view">
 			<field name="name">res.users.form.view</field>
 			<field name="model">res.users</field>
-			<field name="inherit_id" ref="point_of_sale.res_users_form_view" />
+			<field name="inherit_id" ref="base.view_users_form"/>
 			<field name="arch" type="xml">
-				<field name="barcode" position="before">
+				<field name="name" position="before">
 					<field name="default_pos" />
 				</field>
 			</field>
@@ -109,7 +109,6 @@
 			<field name="name">Debt History</field>
             <field name="type">ir.actions.act_window</field>
 			<field name="res_model">wizard.debt.history</field>
-			<field name="view_type">form</field>
 			<field name="view_mode">form</field>
             <field name="target">new</field>
 		</record>
@@ -118,7 +117,6 @@
 			<field name="name">Profit Margin</field>
             <field name="type">ir.actions.act_window</field>
 			<field name="res_model">wizard.profit.margin</field>
-			<field name="view_type">form</field>
 			<field name="view_mode">form</field>
             <field name="target">new</field>
 		</record>
@@ -127,7 +125,6 @@
 			<field name="name">Customers Debts</field>
             <field name="type">ir.actions.act_window</field>
 			<field name="res_model">wizard.customers.debts</field>
-			<field name="view_type">form</field>
 			<field name="view_mode">form</field>
             <field name="target">new</field>
 		</record>

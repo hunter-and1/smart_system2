@@ -29,7 +29,6 @@ class PrintProfitMargin(models.TransientModel):
     start_date = fields.Date('Start Date')
     end_date = fields.Date('end Date')
 
-    @api.multi
     def print_profit_margin(self):
         data = self.read()[0]
         datas = {

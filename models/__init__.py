@@ -19,10 +19,10 @@
 ##############################################################################
 
 
-import point_of_sale
-import res_partner
-import wizard_debt_history
-import wizard_profit_margin
-import wizard_customers_debts
+from . import point_of_sale
+from . import res_partner
+from . import wizard_debt_history
+from . import wizard_profit_margin
+from . import wizard_customers_debts
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

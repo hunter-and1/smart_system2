@@ -26,7 +26,6 @@ import odoo.addons.decimal_precision as dp
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    @api.multi
     def _compute_debt(self):
         domain = [('partner_id', 'in', self.ids)]
         fields = ['partner_id', 'balance']
@@ -47,7 +46,6 @@ class ResPartner(models.Model):
         debt_limit = self.env["ir.config_parameter"].get_param("smart_system2.debt_limit", default=0)
         return float(debt_limit)
 
-    @api.multi
     def debt_history(self, limit=0, start_date=False, end_date=False):
         """
         Get debt details
@@ -144,7 +142,6 @@ class ResPartner(models.Model):
         self.check_access_to_debt_limit(vals)
         return super(ResPartner, self).create(vals)
 
-    @api.multi
     def write(self, vals):
         self.check_access_to_debt_limit(vals)
         return super(ResPartner, self).write(vals)

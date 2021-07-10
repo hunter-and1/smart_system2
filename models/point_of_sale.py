@@ -155,7 +155,6 @@ class PosConfig(models.Model):
         })
         return
 
-    @api.multi
     def open_session_cb(self):
         res = super(PosConfig, self).open_session_cb()
         self.init_debt_journal()
@@ -407,7 +406,7 @@ class AccountJournal(models.Model):
 
 
 class PosConfiguration(models.TransientModel):
-    _inherit = 'pos.config.settings'
+    _inherit = 'res.config.settings'
 
     debt_type = fields.Selection([
         ('debt', 'Display Debt'),
@@ -418,20 +417,16 @@ class PosConfiguration(models.TransientModel):
         string='Default Max Debt', digits=dp.get_precision('Account'), default=0,
         help='Default value for new Customers')
 
-    @api.multi
     def set_debt_type(self):
         self.env["ir.config_parameter"].set_param("smart_system2.debt_type", self.debt_type)
 
-    @api.multi
     def get_default_debt_type(self, fields):
         debt_type = self.env["ir.config_parameter"].get_param("smart_system2.debt_type", default='debt')
         return {'debt_type': debt_type}
 
-    @api.multi
     def set_debt_limit(self):
         self.env["ir.config_parameter"].set_param("smart_system2.debt_limit", str(self.debt_limit))
 
-    @api.multi
     def get_default_debt_limit(self, fields):
         debt_limit = self.env["ir.config_parameter"].get_param("smart_system2.debt_limit", default=0)
         return {'debt_limit': debt_limit}
@@ -558,13 +553,11 @@ class AccountBankStatementLine(models.Model):
 
     is_change = fields.Boolean("Is Change")
 
-    @api.one
     @api.constrains('amount')
     def _check_amount(self):
         if not self._context.get('from_pos'):
             super(AccountBankStatementLine, self)._check_amount()
 
-    @api.one
     @api.constrains('amount', 'amount_currency')
     def _check_amount_currency(self):
         if not self._context.get('from_pos'):

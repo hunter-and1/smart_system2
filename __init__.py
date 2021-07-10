@@ -19,9 +19,9 @@
 ##############################################################################
 
 
-import models
-import report
-import controller
+from . import models
+from . import report
+from . import controller
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

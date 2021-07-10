@@ -7,7 +7,7 @@
 			<field name="arch" type="xml">
                 <form>
                     <group>
-                        <field name="partner_id" domain="[['customer', '=', 'True']]"/>
+                        <field name="partner_id" context="{'res_partner_search_mode': 'customer'}"/>
                     </group>
                     <group>
                         <field name="start_date"/>

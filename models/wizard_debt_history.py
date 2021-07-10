@@ -30,7 +30,6 @@ class PrintDebtHistory(models.TransientModel):
     end_date = fields.Date('End Date')
 
 
-    @api.multi
     def print_debt_history(self):
         data = self.read()[0]
         datas = {
