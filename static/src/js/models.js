@@ -1,14 +1,13 @@
 odoo.define('smart_system2.models', function (require) {
     "use strict";
 
-    var pos_model = require('point_of_sale.models');
-    var Model   = require('web.Model');
-    var Models = require('web.DataModel');
-    var utils = require('web.utils');
-    var db = require('point_of_sale.DB');
+    const pos_model = require('point_of_sale.models');
+    const Model     = require('web.Model');
+    const utils     = require('web.utils');
+    //var Models = require('web.DataModel');
+    //var db = require('point_of_sale.DB');
 
-
-    var round_pr = utils.round_precision;
+    const round_pr = utils.round_precision;
 
     pos_model.load_models({
         model: 'product.pricelist',
@@ -81,11 +80,13 @@ odoo.define('smart_system2.models', function (require) {
                 }
             })
             var partner_ids = [];
-            _.each(orders, function(o){
+            orders.forEach(function(o) {
                 if (o.data.updates_debt && o.data.partner_id)
                     partner_ids.push(o.data.partner_id);
             });
-            partner_ids = _.unique(partner_ids);
+            partner_ids = partner_ids.filter((value, index, self) => {
+                return self.indexOf(value) === index;
+            });
             if (partner_ids.length){
                 return def.then(function(server_ids){
                     self.reload_debts(partner_ids);
@@ -96,23 +97,6 @@ odoo.define('smart_system2.models', function (require) {
             }
         },
         reload_debts: function(partner_ids, limit, options){
-            /**
-             @param {Array} partner_ids
-             @param {Number} limit
-             @param {Object} options
-               * "shadow" - set true to load in background (i.e. without blocking the screen). Default is True
-               * "postpone" - make a short delay before actual requesting to
-                 gather partner_ids from other calls and request them at once.
-                 Default is true
-
-    //          **/
-
-    //         // FIXME: on multiple calls limit value from last call is conly used.
-    //         // We probably need to have different partner_ids list (like reload_debts_partner_ids) for each limit value, e.g.
-    //         // limit=0 -> partner_ids=[1,2,3]
-    //         // limit=10 -> partner_ids = [1, 101, 102, 103]
-    //         //
-    //         // As for shadow it seems ok to use last value
 
             var self = this;
             // function is called whenever we need to update debt value from server
@@ -250,15 +234,10 @@ odoo.define('smart_system2.models', function (require) {
 
     var _super_order = pos_model.Order.prototype;
     pos_model.Order = pos_model.Order.extend({
-    	// debt_noteBook
         initialize: function (session, attributes) {
             this.on('change:client', function(){
-                // reload debt history whenever we set customer,
-                // because debt value can be obsolete due to network issues
-                // and pos_longpolling status is not 100% gurantee
                 var client = this.get_client();
                 if (client)
-                    // reload only debt value, use background mode, send request immediatly
                     this.pos.reload_debts([client.id], 0, {"postpone": false});
             }, this);
             this.set({
@@ -386,15 +365,11 @@ odoo.define('smart_system2.models', function (require) {
     	        }
     	    }
     	    var last_orderline = this.get_last_orderline();
-//    	    if(self.pos.config.enable_margin){
-//                self.margin_calculate(line);
-//            }
     	    if( last_orderline && last_orderline.can_be_merged_with(line) && options.merge !== false){
     	        last_orderline.merge(line);
     	        if (self.pos.config.enable_pricelist){
                     if(partner){
         	        	if(pricelist_id){
-        //	        		var pricelist_id = partner.property_product_pricelist[0];
         	        		var qty = last_orderline.get_quantity();
         	        		new Model("product.pricelist").get_func('price_get')([pricelist_id], product.id, qty).pipe(
                                 function(res){
@@ -402,16 +377,6 @@ odoo.define('smart_system2.models', function (require) {
                                         var pricelist_value = parseFloat(res[pricelist_id].toFixed(2));
                                         if (pricelist_value) {
                                             last_orderline.set_unit_price(pricelist_value);
-//                                            if(self.pos.config.enable_margin){
-////                                                self.pos.get_order().margin_calculate(line);
-//                                                line.calculate_line_margin();
-//                                            }
-//                                            if (self.pos.config.enable_show_cost_price){
-//                                                if (line.price < line.product.standard_price){
-//                                                    self.pos.db.notification('info','Sale price is less then cost price!');
-//                                                     $('.pos .order .orderline.selected').css("background","#F57D7D");
-//                                                }
-//                                            }
                                         }
                                     }
                                 }
@@ -420,12 +385,11 @@ odoo.define('smart_system2.models', function (require) {
         		    }
                 }
     	    } else {
-    	    	var pricelist_value = null;
+    	    	//var pricelist_value = null;
                 if (self.pos.config.enable_pricelist){
                     if (partner) {
                         var self = this;
                         if(pricelist_id){
-        //	        		var pricelist_id = partner.property_product_pricelist[0];
         	        		new Model("product.pricelist").get_func('price_get')([pricelist_id], product.id,1).pipe(
                             function(res){
                                 if (res[pricelist_id]) {
@@ -434,15 +398,6 @@ odoo.define('smart_system2.models', function (require) {
                                         line.set_unit_price(pricelist_value);
                                         self.orderlines.add(line);
                                         self.select_orderline(self.get_last_orderline());
-//                                        if(self.pos.config.enable_margin){
-//                                            line.calculate_line_margin();
-//                                        }
-//                                        if (self.pos.config.enable_show_cost_price){
-//                                            if (line.price < line.product.standard_price){
-//                                                self.pos.db.notification('info','Sale price is less then cost price!');
-//                                                $('.pos .order .orderline.selected').css("background","#F57D7D");
-//                                            }
-//                                        }
                                     }
                                     else {
                                     	self.orderlines.add(line);
@@ -459,13 +414,8 @@ odoo.define('smart_system2.models', function (require) {
                 } else{
                     this.orderlines.add(line);
                 }
-
-//                if(self.pos.config.enable_margin){
-//                    var margin = self.pos.get_order().margin_calculate(line);
-//                }
     	    }
     	    this.select_orderline(this.get_last_orderline());
-    	  //cart resize code
     	    $('.order-container').resizable();
             $('.order-container').mousedown(function() {
             	$('.order-container').css('z-index','1000');
@@ -479,25 +429,25 @@ odoo.define('smart_system2.models', function (require) {
         	$('.order').css('max-width','100%');
     	},
         select_orderline: function(line){
-             var self = this;
-             if(line){
-                 _super_order.select_orderline.call(this,line);
-                 if (self.pos.config.enable_show_cost_price){
-                     if(self.pos.config.enable_pricelist){
-                         if (line.get_unit_price() < line.product.standard_price){
-                             self.pos.db.notification('info','Sale price is less then cost price!');
-                              $('.pos .order .orderline.selected').css("background","#F57D7D");
-                         }
-                     } else{
-                         if (line.price < line.product.standard_price){
-                             self.pos.db.notification('info','Sale price is less then cost price!');
-                              $('.pos .order .orderline.selected').css("background","#F57D7D");
-                         }
-                     }
-                 }
-             } else{
-                 this.selected_orderline = undefined;
-             }
+            var self = this;
+            if(line){
+                _super_order.select_orderline.call(this,line);
+                if (self.pos.config.enable_show_cost_price){
+                    if(self.pos.config.enable_pricelist){
+                        if (line.get_unit_price() < line.product.standard_price){
+                            self.pos.db.notification('info','Sale price is less then cost price!');
+                            $('.pos .order .orderline.selected').css("background","#F57D7D");
+                        }
+                    } else{
+                        if (line.price < line.product.standard_price){
+                            self.pos.db.notification('info','Sale price is less then cost price!');
+                            $('.pos .order .orderline.selected').css("background","#F57D7D");
+                        }
+                    }
+                }
+            } else{
+                this.selected_orderline = undefined;
+            }
          },
     	set_order_note: function(order_note) {
             this.order_note = order_note;

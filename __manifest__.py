@@ -24,7 +24,7 @@
     'summary' : "Point of Sale Smart System arab",
     "description": """ Smart System Ar """,
     'author': " Solutions Pvt. Ltd.",
-    'website': "pritech",
+    'website': "#",
     'depends': ['web', 'point_of_sale', 'product', 'sale'],
     'data': [
         'security/ir.model.access.csv',
@@ -45,7 +45,7 @@
     ],
     'demo': [],
     'test': [],
-    'images': ['static/description/main_screenshot.png'],
+    'images': [],
     'qweb': ['static/src/xml/pos.xml'],
     'installable': True,
     'auto_install': False,

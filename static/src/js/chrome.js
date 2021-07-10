@@ -1,21 +1,5 @@
 odoo.define('smart_system2.chrome', function (require) {
     var chrome = require('point_of_sale.chrome');
-
-//    chrome.HeaderButtonWidget.include({
-//		renderElement: function(){
-//	        var self = this;
-//	        this._super();
-//	        if(this.action){
-//	            this.$el.unbind('click').click(function(){
-//	            	if(!self.pos.user.default_pos){
-//	            	    self.action();
-//	            	} else {
-//	            	    $.ajax({ url: '/web/session/logout',});
-//	            	}
-//	            });
-//	        }
-//	    },
-//	});
     chrome.Chrome.include({
     	build_widgets: function(){
             var self = this;

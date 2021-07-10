@@ -1,141 +1,159 @@
 odoo.define('smart_system2.screens', function (require) {
+
     "use strict";
 
-    var screens = require('point_of_sale.screens');
-    var pos_model = require('point_of_sale.models');
-    var Model   = require('web.Model');
-    var db = require('point_of_sale.DB');
-    var core = require('web.core');
-    var gui     = require('point_of_sale.gui');
-    var Dialog = require('web.Dialog');
-    var QWeb = core.qweb;
-    var time = require('web.time');
+    const { useState,onMounted, onUnmounted } = owl.hooks;
+    const { useListener } = require('web.custom_hooks');
 
-    var _t = core._t;
-
-    var AddProductButton = screens.ActionButtonWidget.extend({
-        template : 'AddProductButton',
-        button_click : function() {
-            var self = this;
-            var selectedOrder = this.pos.get_order();
-            self.gui.show_popup('add_product_popup');
-        },
-    });
-
-    screens.define_action_button({
-        'name' : 'add_product_button',
-        'widget' : AddProductButton,
-        'condition': function(){
-            return this.pos.config.enable_add_product;
-        },
-    });
-
-    var PayFullDebt = screens.ActionButtonWidget.extend({
-        template : 'PayFullDebt',
-        button_click : function() {
-            var self = this;
-            self.gui.show_popup('PayDebtPopupWidget');
-        },
-    });
-
-    screens.define_action_button({
-        'name' : 'pay_full_debt',
-        'widget' : PayFullDebt,
-        'condition': function(){
-            return this.pos.config.enable_debit;
-        },
-    });
-
-    var AddNoteButton = screens.ActionButtonWidget.extend({
-        template: 'AddNoteButton',
-        button_click: function(){
-            var order    = this.pos.get_order();
-            var lines    = order.get_orderlines();
-            if(lines.length > 0) {
-                var selected_line = order.get_selected_orderline();
-                if (selected_line) {
-                    this.gui.show_popup('add_note_popup');
-                }
-            } else {
-                alert("Please select the product !");
-            }
-        },
-    });
-
-    screens.define_action_button({
-        'name': 'addnoteline',
-        'widget': AddNoteButton,
-        'condition': function(){
-            return this.pos.config.enable_product_note;
-        },
-    });
-
-    screens.ProductCategoriesWidget.include({ 
-        renderElement: function(){
-            var self = this;
-            this._super();
-            $('#syncbutton').click(function(){
-                var currency_symbol = (self.pos && self.pos.currency) ? self.pos.currency : {symbol:'$', position: 'after', rounding: 0.01, decimals: 2};
-                $('#syncbutton').toggleClass('rotate', 'rotate-reset');
-                self.pos.load_new_products(currency_symbol)
-            });
-        },
-    });
+    const pos_model = require('point_of_sale.models');
     
-    screens.ProductListWidget.include({
-        set_product_list: function(product_list){
-            var self = this;
-            self.actual_product_list = [];
-            var prod_temp = []
-            if (self.pos.config.debt_dummy_product_id[0]){
-                prod_temp.push(self.pos.config.debt_dummy_product_id[0]);
-            }
-            if (self.pos.config.paid_amount_product[0]){
-                prod_temp.push(self.pos.config.paid_amount_product[0]);
-            }
-            _.each(product_list, function(product){
-                    if (product.id){
-                        if ($.inArray(product.id, prod_temp) == -1){
-                            self.actual_product_list.push(product);
-                        } 
-                    }
-                });
-            this.product_list = self.actual_product_list;
-            this.renderElement();
-        },
-    });
+    const Model     = require('web.Model');
 
-    screens.PaymentScreenWidget.include({
-        init: function(parent, options) {
-            this._super(parent, options);
+    const Registries = require("point_of_sale.Registries");
+    const PosComponent  = require('point_of_sale.PosComponent');
+
+    const ProductScreen = require("point_of_sale.ProductScreen");
+    const ProductCategories = require("point_of_sale.ProductCategories");
+    const ProductList = require("point_of_sale.ProductList");
+    const PaymentScreen = require("point_of_sale.PaymentScreen");
+    const Order = require("point_of_sale.Order");
+    const Actionpad = require("point_of_sale.Actionpad");
+    const ClientListScreen = require("point_of_sale.ClientListScreen");
+    const ReceiptScreen = require("point_of_sale.ReceiptScreen");
+
+    //Hooks
+
+    function useOrderNote() {
+        const keyboard_handler = e => {
+            console.log('keyboard_handler');
+        }
+        const keyboard_keydown_handler = e => {
+            console.log('keyboard_keydown_handler');
+        }
+        onMounted(() => {
+            window.document.body.addEventListener('keypress', keyboard_handler)
+            window.document.body.addEventListener('keydown', keyboard_keydown_handler)
+        })
+        onUnmounted(() => {
+            window.document.body.removeEventListener('keypress', keyboard_handler)
+            window.document.body.removeEventListener('keydown', keyboard_keydown_handler)
+        })
+        return {}
+    }
+      
+    //screens
+
+    const PosProductScreen = (_ProductScreen) => class extends _ProductScreen {
+
+        constructor() {
+            super(...arguments);
+            this.pricelist_selector = "";
+            this.pricelist_list = [];
+            this.new_options = [{
+                value:"",
+                title:'Select Pricelist'
+            }];
+            //.push('<option value="">Select Pricelist</option>\n')
+
+            if(this.pricelist_list.length > 0){
+                for(let i = 0, len = this.pricelist_list.length; i < len; i++){
+                    this.new_options.push({
+                        value:this.pricelist_list[i].id,
+                        title:this.pricelist_list[i].display_name
+                    });
+                    //this.new_options.push('<option value="' + this.pricelist_list[i].id + '">' + this.pricelist_list[i].display_name + '</option>\n');
+                }
+                //$('#price_list').html(this.new_options);
+
+                let order = this.pos.get('selectedOrder');
+                if(order.get_client() && order.get_client().property_product_pricelist[0]){
+                    this.pricelist_selector = order.get_client().property_product_pricelist[0];
+                    //$('#price_list').val(order.get_client().property_product_pricelist[0]);
+                }
+                //$('#price_list').selectedIndex = 0;
+            }
+        }
+
+        change_price_list() {
+            let partner_id = this.pos.get('selectedOrder').get_client() && parseInt(this.pos.get('selectedOrder').get_client().id);
+            if (!partner_id) {
+                this.pricelist_list = [];
+                    alert('Pricelist will not work as customer is not selected !');
+                return;
+            }
+        }
+
+    };
+
+    const PosProductCategories = (_ProductCategories) => class extends _ProductCategories {
+        constructor() {
+            super(...arguments);
+            this.isSync = false;
+        }
+        //('#syncbutton').click
+        click_sync_btn(){
+            let currency_symbol = (this.pos && this.pos.currency) ? this.pos.currency : {symbol:'$', position: 'after', rounding: 0.01, decimals: 2};
+            //$('#syncbutton').toggleClass('rotate', 'rotate-reset');
+            this.isSync != this.isSync;
+            this.pos.load_new_products(currency_symbol)
+        }
+
+    };
+
+    const PosProductList = (_ProductList) => class extends _ProductList {
+        constructor() {
+            super(...arguments);
+            this.product_list = [];
+        }
+
+        set_product_list(_product_list)
+        {
+            let actual_product_list = [];
+            let prod_temp = [];
+            if (this.pos.config.debt_dummy_product_id[0])
+                prod_temp.push(this.pos.config.debt_dummy_product_id[0]);
+            
+            if (this.pos.config.paid_amount_product[0])
+                prod_temp.push(this.pos.config.paid_amount_product[0]);
+            
+            _product_list.forEach(function(product) {
+                if (product.id){
+                    if (!prod_temp.includes(product.id)){
+                        actual_product_list.push(product);
+                    } 
+                }
+            });
+            this.product_list = actual_product_list;
+        }
+    };
+
+    const PosPaymentScreen = (_PaymentScreen) => class extends _PaymentScreen {
+        constructor() {
+            super(...arguments);
+
+            this.state = useState({
+                order_note: "",
+                customer_name_html : "",
+                pay_full_debt_class: ""
+            });
+
             this.pos.on('updateDebtHistory', function(partner_ids){
                 this.update_debt_history(partner_ids);
             }, this);
-            
-        },
-        update_debt_history: function (partner_ids){
-            var client = this.pos.get_client();
-            if (client && $.inArray(client.id, partner_ids) != -1) {
+        }
+
+        update_debt_history(partner_ids)
+        {
+            let client = this.pos.get_client();
+            if (client && partner_ids.includes(client.id.id) != -1) {
                 this.gui.screen_instances.products.actionpad.renderElement();
                 this.customer_changed();
             }
-        },
-        renderElement: function() {
-            var self = this;
-            this._super();
-            var order = this.pos.get_order();
-            var $pay_full_debt = this.$('.pay-full-debt');
-            $pay_full_debt.on('click', function() {
-                self.pay_full_debt();
-            });
-            this.$('.create_draft').click(function(){
-                order.set_draft_order(true);
-                self.validate_order();
-	        });
-        },
-        show: function() {
-            self = this;
-            this._super();
+        }
+
+        show() {
+            //useOrderNote()
+            /* 
             $("textarea#order_note").focus(function() {
                 window.document.body.removeEventListener('keypress',self.keyboard_handler);
                 window.document.body.removeEventListener('keydown',self.keyboard_keydown_handler);
@@ -143,11 +161,12 @@ odoo.define('smart_system2.screens', function (require) {
             $("textarea#order_note").focusout(function() {
                 window.document.body.addEventListener('keypress',self.keyboard_handler);
                 window.document.body.addEventListener('keydown',self.keyboard_keydown_handler);
-            });
-        },
-        finalize_validation: function() {
-            var self = this;
-            var order = this.pos.get_order();
+            });*/
+        }
+
+        finalize_validation()
+        {
+            let order = this.pos.get_order();
 
             if (order.is_paid_with_cash() && this.pos.config.iface_cashdrawer) {
                 this.pos.proxy.open_cashbox();
@@ -156,13 +175,12 @@ odoo.define('smart_system2.screens', function (require) {
             order.initialize_validation_date();
 
             if (order.is_to_invoice()) {
-                var invoiced = this.pos.push_and_invoice_order(order);
+                let invoiced = this.pos.push_and_invoice_order(order);
                 this.invoicing = true;
-
                 invoiced.fail(function(error){
-                    self.invoicing = false;
+                    this.invoicing = false;
                     if (error.message === 'Missing Customer') {
-                        self.gui.show_popup('confirm',{
+                        this.gui.show_popup('confirm',{
                             'title': _t('Please select the Customer'),
                             'body': _t('You need to select the customer before you can invoice an order.'),
                             confirm: function(){
@@ -170,17 +188,17 @@ odoo.define('smart_system2.screens', function (require) {
                             },
                         });
                     } else if (error.code < 0) {        // XmlHttpRequest Errors
-                        self.gui.show_popup('error',{
+                        this.gui.show_popup('error',{
                             'title': _t('The order could not be sent'),
                             'body': _t('Check your internet connection and try again.'),
                         });
                     } else if (error.code === 200) {    // OpenERP Server Errors
-                        self.gui.show_popup('error-traceback',{
+                        this.gui.show_popup('error-traceback',{
                             'title': error.data.message || _t("Server Error"),
                             'body': error.data.debug || _t('The server encountered an error while receiving your order.'),
                         });
                     } else {                            // ???
-                        self.gui.show_popup('error',{
+                        this.gui.show_popup('error',{
                             'title': _t("Unknown Error"),
                             'body':  _t("The order could not be sent to the server due to an unknown error"),
                         });
@@ -188,53 +206,51 @@ odoo.define('smart_system2.screens', function (require) {
                 });
 
                 invoiced.done(function(){
-                    self.invoicing = false;
-                    self.gui.show_screen('receipt');
+                    this.invoicing = false;
+                    this.gui.show_screen('receipt');
                 });
             } else {
                 this.pos.push_order(order).then(function(){
-                    self.gui.show_screen('receipt');
+                    this.gui.show_screen('receipt');
                 });
             }
-        },
-        validate_order: function(force_validation) {
-            var self = this;
-            var order = self.pos.get_order();
+        }
+
+        validate_order()
+        {
+            let order = this.pos.get_order();
             if (this.pos.config.enable_multi_sale_location){
-                var lines =  order.get_orderlines();
-                var line_data = [];
-                var diff_location = [];
-                var dict_current_location ={};
-                _.each(lines, function(line){
+                let lines =  order.get_orderlines();
+                let line_data = [];
+                let diff_location = [];
+                let dict_current_location ={};
+                lines.forEach(function(line) {
                     if (line.get_stock_location()){
-                        if(line.get_stock_location()[0] != self.pos.config.stock_location_id[0]){
+                        if(line.get_stock_location()[0] != this.pos.config.stock_location_id[0]){
                             diff_location.indexOf(line.get_stock_location()[0]) === -1 ?
                             diff_location.push(line.get_stock_location()[0]) : console.log("");
                         }
                     }
                 });
-                for (var stock=0;stock<diff_location.length;stock++){
-                    var line_list = []
-                    for (var line=0;line<lines.length;line++){
+                for (let stock=0;stock<diff_location.length;stock++){
+                    let line_list = []
+                    for (let line=0;line<lines.length;line++){
                         if (lines[line].get_stock_location()[0] == diff_location[stock]){
                              line_list.push(lines[line])
                         }
                     }
-                    dict_current_location[diff_location[stock]] = line_list; 
-
+                    dict_current_location[diff_location[stock]] = line_list;
                 }
                 order.set_order_stock_location(dict_current_location); 
             }
-            if(this.pos.config.enable_order_note) {
-                var currentOrder = this.pos.get_order();
-                currentOrder.set_order_note($('#order_note').val());
-            }
-            // debt_notebook Module
-            var currentOrder = this.pos.get_order();
-            var isDebt = currentOrder.updates_debt();
-            var debt_amount = currentOrder.get_debt_delta();
-            var client = currentOrder.get_client();
-            if(self.pos.config.enable_debit){
+            let currentOrder = this.pos.get_order();
+            if(this.pos.config.enable_order_note)
+                currentOrder.set_order_note(this.state.order_note);
+            
+            let isDebt = currentOrder.updates_debt();
+            let debt_amount = currentOrder.get_debt_delta();
+            let client = currentOrder.get_client();
+            if(this.pos.config.enable_debit){
                 if (client){
                     currentOrder.debt_before = client.debt;
                     currentOrder.debt_after = currentOrder.debt_before + debt_amount;
@@ -272,146 +288,164 @@ odoo.define('smart_system2.screens', function (require) {
                 }
                 client && this.pos.gui.screen_instances.clientlist.partner_cache.clear_node(client.id);
             }
-            this._super(force_validation);
-        },
-        pay_full_debt: function(){
-            var order = this.pos.get_order();
-            var self = this;
-            if (self.pos.config.enable_debit){
-                var debtjournal = false;
-                _.each(this.pos.cashregisters, function(cashregister) {
-                    if (cashregister.journal.debt) {
-                        debtjournal = cashregister;
-                    }
+            //this._super(force_validation);
+        }
 
+        pay_full_debt(){
+            let order = this.pos.get_order();
+            if (this.pos.config.enable_debit){
+                let debtjournal = false;
+                this.pos.cashregisters.forEach(function(cashregister) {
+                    if (cashregister.journal.debt)
+                        debtjournal = cashregister;
                 });
 
-                var paymentLines = order.get_paymentlines();
+                let paymentLines = order.get_paymentlines();
                 if (paymentLines.length) {
-                    _.each(paymentLines, function(paymentLine) {
+                    paymentLines.forEach(function(paymentLine) {
                         if (paymentLine.cashregister.journal.debt){
                             paymentLine.destroy();
                         }
                     });
                 }
-                var order = self.pos.get_order();
-                var product = self.pos.db.get_product_by_id(self.pos.config.debt_dummy_product_id[0]);
+                //var order = self.pos.get_order();
+                let product = this.pos.db.get_product_by_id(this.pos.config.debt_dummy_product_id[0]);
                 order.add_product(product);
-                var newDebtPaymentline = new pos_model.Paymentline({},{order: order, cashregister: debtjournal, pos: this.pos});
+                let newDebtPaymentline = new pos_model.Paymentline({},{order: order, cashregister: debtjournal, pos: this.pos});
                 newDebtPaymentline.set_amount(order.get_client().debt * -1);
                 order.paymentlines.add(newDebtPaymentline);
-                this.render_paymentlines();
+                //this.render_paymentlines();
             }
-        },
-        pay_partial_debt: function(amount){
-            var order = this.pos.get_order();
-            var self = this;
-            if (self.pos.config.enable_debit){
-                var debtjournal = false;
-                _.each(this.pos.cashregisters, function(cashregister) {
+        }
+
+        pay_partial_debt(){
+            let order = this.pos.get_order();
+            if (this.pos.config.enable_debit){
+                let debtjournal = false;
+                this.pos.cashregisters.forEach(function(cashregister) {
                     if (cashregister.journal.debt) {
                         debtjournal = cashregister;
                     }
-
                 });
 
                 var paymentLines = order.get_paymentlines();
                 if (paymentLines.length) {
-                    _.each(paymentLines, function(paymentLine) {
+                    paymentLines.forEach(function(paymentLine) {
                         if (paymentLine.cashregister.journal.debt){
                             paymentLine.destroy();
                         }
                     });
                 }
-                var order = self.pos.get_order();
-                var product = self.pos.db.get_product_by_id(self.pos.config.debt_dummy_product_id[0]);
+                //var order = self.pos.get_order();
+                let product = this.pos.db.get_product_by_id(this.pos.config.debt_dummy_product_id[0]);
                 order.add_product(product);
-                var newDebtPaymentline = new pos_model.Paymentline({},{order: order, cashregister: debtjournal, pos: this.pos});
+                let newDebtPaymentline = new pos_model.Paymentline({},{order: order, cashregister: debtjournal, pos: this.pos});
                 newDebtPaymentline.set_amount(amount * -1);
                 order.paymentlines.add(newDebtPaymentline);
-                this.render_paymentlines();
+                //this.render_paymentlines();
             }
-        },
-        is_paid: function(){
-            var currentOrder = this.pos.get_order();
+        }
+
+        is_paid(){
+            let currentOrder = this.pos.get_order();
             return (currentOrder.getPaidTotal() + 0.000001 >= currentOrder.getTotalTaxIncluded());
-        },
-        customer_changed: function() {
-            var self = this;
-            if (self.pos.config.enable_debit){
-                var client = this.pos.get_client();
-                var debt = 0;
+        }
+
+        customer_changed() {
+            if (this.pos.config.enable_debit){
+                let client = this.pos.get_client();
+                let debt = 0;
                 if (client) {
                     debt = Math.round(client.debt * 100) / 100;
-                    if (client.debt_type == 'credit') {
+                    if (client.debt_type == 'credit')
                         debt = - debt;
-                    }
                 }
-                var $js_customer_name = this.$('.js_customer_name');
-                var $pay_full_debt = this.$('.pay-full-debt');
-                $js_customer_name.text(client ? client.name : _t('Customer'));
-                $pay_full_debt.addClass('oe_hidden');
+
+
+                this.state.customer_name_html = client ? client.name : _t('Customer');
+                this.state.pay_full_debt_class = "oe_hidden";
+                //$js_customer_name.text(client ? client.name : _t('Customer'));
+                //$pay_full_debt.addClass('oe_hidden');
+
                 if (client && debt) {
                     if (client.debt_type == 'debt') {
                         if (debt > 0) {
-                            $pay_full_debt.removeClass('oe_hidden');
-                            $js_customer_name.append('<span class="client-debt positive"> [Debt: ' + debt + ']</span>');
+                            this.state.pay_full_debt_class = "";
+                            this.state.customer_name_html += '<span class="client-debt positive"> [Debt: ' + debt + ']</span>';
+                            //$pay_full_debt.removeClass('oe_hidden');
+                            //$js_customer_name.append('<span class="client-debt positive"> [Debt: ' + debt + ']</span>');
                         } else if (debt < 0) {
-                            $js_customer_name.append('<span class="client-debt negative"> [Debt: ' + debt + ']</span>');
+                            this.state.customer_name_html += '<span class="client-debt negative"> [Debt: ' + debt + ']</span>';
+                            //$js_customer_name.append('<span class="client-debt negative"> [Debt: ' + debt + ']</span>');
                         }
                     } else if (client.debt_type == 'credit') {
                         if (debt > 0) {
-                            $js_customer_name.append('<span class="client-credit positive"> [Credit: ' + debt + ']</span>');
+                            this.state.customer_name_html += '<span class="client-credit positive"> [Credit: ' + debt + ']</span>';
+                            //$js_customer_name.append('<span class="client-credit positive"> [Credit: ' + debt + ']</span>');
                         } else if (debt < 0) {
                             $pay_full_debt.removeClass('oe_hidden');
-                            $js_customer_name.append('<span class="client-credit negative"> [Credit: ' + debt + ']</span>');
+                            this.state.pay_full_debt_class = "";
+                            this.state.customer_name_html += '<span class="client-credit negative"> [Credit: ' + debt + ']</span>';
+                            //$js_customer_name.append('<span class="client-credit negative"> [Credit: ' + debt + ']</span>');
                         }
                     }
                 }
             }
-        },
-        click_delete_paymentline: function(cid){
-            var self = this;
-            var lines = this.pos.get_order().get_paymentlines();
-            for ( var i = 0; i < lines.length; i++ ) {
+        }
+
+        click_delete_paymentline(cid){
+            let lines = this.pos.get_order().get_paymentlines();
+            for (let i = 0; i < lines.length; i++ ) {
                 if (lines[i].cid === cid) {
                     if(lines[i] && lines[i].get_dummy_line()){
-                        return
+                        return;
                     }
                 }
             }
-            this._super(cid);
-        },
-    });
+            //this._super(cid);
+        }
+    };
 
-    screens.OrderWidget.include({
+    const PosOrder = (_Order) => class extends _Order {
 
-        click_line: function(orderline, event) {
-            if (event.target.id == 'stock_location'){
+        constructor() {
+            super(...arguments);
+
+            this.state = useState({
+                total_qty: 0, //.summary .total .total_qty .value
+                no_items : 0, //.summary .total .no_items .value
+                margin : 0, //.summary .total .margin .value
+            });
+
+
+        }
+        
+        click_line(orderline, e) {
+            if (e.target.id == 'stock_location'){
                 this.gui.show_popup('stock_loction_popup');
             }
             this.pos.get_order().select_orderline(orderline);
             this.numpad_state.reset();
-        },
-        set_value: function(val) {
-            var self = this;
-            var order = this.pos.get_order();
+        }
+
+        set_value(val)
+        {
+            let order = this.pos.get_order();
             if (order.get_selected_orderline()) {
-                var mode = this.numpad_state.get('mode');
+                let mode = this.numpad_state.get('mode');
                 if( mode === 'quantity'){
-                	var partner = order.get_client();
-                	var pricelist_id = order.get_pricelist();
+                	//let partner = order.get_client();
+                	let pricelist_id = order.get_pricelist();
                     if (pricelist_id && order.get_selected_orderline() && (val != 'remove')) {
-    //                	var pricelist_id = partner.property_product_pricelist[0];
-                        var qty = order.get_selected_orderline().get_quantity();
-                        var p_id = order.get_selected_orderline().get_product().id;
+                        //let qty = order.get_selected_orderline().get_quantity();
+                        let p_id = order.get_selected_orderline().get_product().id;
                         if (! val) {
                             val = 1;
                         }
                         new Model("product.pricelist").get_func('price_get')([pricelist_id], p_id, parseInt(val)).pipe(
                             function(res){
                                 if (res[pricelist_id]) {
-                                    var pricelist_value = parseFloat(res[pricelist_id].toFixed(2));
+                                    let pricelist_value = parseFloat(res[pricelist_id].toFixed(2));
                                     if (pricelist_value) {
                                     	order.get_selected_orderline().set_quantity(val);
                                         order.get_selected_orderline().set_unit_price(pricelist_value);
@@ -422,122 +456,56 @@ odoo.define('smart_system2.screens', function (require) {
                     } else {
                     	order.get_selected_orderline().set_quantity(val);
                     }
-//                    if (val=="" && order.get_selected_orderline()){
-//                        if (order.get_selected_orderline().quantity == 0){
-//                            order.get_selected_orderline().set_line_margin(0);
-//                        }
-//                    } else if (val && order.get_selected_orderline()){
-//                        if (order.get_selected_orderline().quantity == 0){
-//                            order.get_selected_orderline().set_line_margin(0);
-//                        }else{
-//                            if (order.get_selected_orderline().get_quantity() >= 1){
-//                                var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price * order.get_selected_orderline().get_quantity());
-//                                order.get_selected_orderline().set_line_margin(total);
-//                            } else{
-//                                var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price );
-//                                order.get_selected_orderline().set_line_margin(total);
-//                            }
-//                        }
-//                    }
+
                 }else if( mode === 'discount'){
                     order.get_selected_orderline().set_discount(val);
-//                    if(self.pos.config.enable_margin){
-//                        if (val=="" && order.get_selected_orderline()){
-//                            if (order.get_selected_orderline().get_quantity() >= 1){
-//                                var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price * order.get_selected_orderline().get_quantity());
-//                                order.get_selected_orderline().set_line_margin(total);
-//                            } else{
-//                                var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price );
-//                                order.get_selected_orderline().set_line_margin(total);
-//                            }
-//                        } else if (val && order.get_selected_orderline()){
-//                            if (order.get_selected_orderline().get_discount() >= 100){
-//                                order.get_selected_orderline().set_line_margin(0);
-//                            } else{
-//                                if (order.get_selected_orderline().get_quantity() >= 1){
-//                                var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price * order.get_selected_orderline().get_quantity());
-//                                order.get_selected_orderline().set_line_margin(total);
-//                                } else{
-//                                    var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price );
-//                                    order.get_selected_orderline().set_line_margin(total);
-//                                }
-//                            }
-//                        }
-//                    }
-//                    var disc = order.get_selected_orderline().get_unit_price() * order.get_selected_orderline().get_discount() / 100 ;
-//                    var price =  order.get_selected_orderline().get_unit_price() - disc;
-//                    if (order.get_selected_orderline().get_display_price() < order.get_selected_orderline().product.standard_price * order.get_selected_orderline().get_quantity()){
-//                        self.pos.db.notification('info','Sale price is less then cost price!');
-//                         $('.pos .order .orderline.selected').css("background","#F57D7D");
-//                    }
+
                 }else if( mode === 'price'){
                     order.get_selected_orderline().set_unit_price(val);
-//                    if(self.pos.config.enable_margin){
-//                        if (val=="" && order.get_selected_orderline()){
-//                            if (order.get_selected_orderline().get_unit_price() == 0){
-//                                order.get_selected_orderline().set_line_margin(0);
-//                            }
-//                        } else if (val && order.get_selected_orderline()){
-//                            if (order.get_selected_orderline().get_unit_price() == 0){
-//                                order.get_selected_orderline().set_line_margin(0);
-//                            } else{
-//                                if (order.get_selected_orderline().get_quantity() >= 1){
-//                                var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price * order.get_selected_orderline().get_quantity());
-//                                order.get_selected_orderline().set_line_margin(total);
-//                                } else{
-//                                    var total = order.get_selected_orderline().get_display_price() - (order.get_selected_orderline().product.standard_price );
-//                                    order.get_selected_orderline().set_line_margin(total);
-//                                }
-//                            }
-//                        }
-//                    }
-//                    if (order.get_selected_orderline().get_unit_price() < order.get_selected_orderline().product.standard_price){
-//                        self.pos.db.notification('info','Sale price is less then cost price!');
-//                         $('.pos .order .orderline.selected').css("background","#F57D7D");
-//                    }
                 }
             }
-        },
-        update_summary: function(){
-            var self = this;
-			self._super();
-			var order = this.pos.get_order();
-			if (!order.get_orderlines().length) {
+        }
+
+        update_summary(){
+			let order = this.pos.get_order();
+			if (!order.get_orderlines().length)
 			    return;
-			}
-			if(self.pos.config.enable_cart_detail){
-				var total_qty = 0.00;
-	            var no_items = 0.00;
-	            var orderline_quantity = order.get_orderlines();
-	            no_items = orderline_quantity.length;
-	            _.each(orderline_quantity, function(select_quantity){
-	                    total_qty += select_quantity.quantity;
+			
+			if(this.pos.config.enable_cart_detail){
+
+	            let orderline_quantity = order.get_orderlines();
+
+				this.state.total_qty = 0;
+                this.state.no_items = orderline_quantity.length;
+
+                orderline_quantity.forEach(function(select_quantity) {
+                    this.state.total_qty += select_quantity.quantity;
 	            });
-	            order.set_total_qty(total_qty);
-	            var total_quantity  = order.get_total_qty();
-	            this.el.querySelector('.summary .total .total_qty .value').textContent = total_quantity;
-	            this.el.querySelector('.summary .total .no_items .value').textContent = no_items;
+	            order.set_total_qty(this.state.total_qty);
 	        }
-	        if(self.pos.config.enable_margin){
-				var margin = order ? order.get_total_margin() : 0;
-				this.el.querySelector('.summary .total .margin .value').textContent = this.format_currency(margin);
+
+	        if(this.pos.config.enable_margin){
+				this.state.margin = this.format_currency(order ? order.get_total_margin() : 0);
 			}
-			if(self.pos.config.enable_show_cost_price && order.get_selected_orderline()){
-			    var selected_line = order.get_selected_orderline();
+
+			if(this.pos.config.enable_show_cost_price && order.get_selected_orderline()){
+			    let selected_line = order.get_selected_orderline();
 			    if (selected_line.get_discount()){
-			        var total_cost_price = selected_line.get_product().standard_price * selected_line.get_quantity();
+			        let total_cost_price = selected_line.get_product().standard_price * selected_line.get_quantity();
                     if (selected_line.get_display_price() < total_cost_price){
-                        self.pos.db.notification('info','Sale price is less then cost price!');
-                        $('.pos .order .orderline.selected').css("background","#F57D7D");
+                        this.pos.db.notification('info','Sale price is less then cost price!');
+                        //$('.pos .order .orderline.selected').css("background","#F57D7D");
                     }
 			    } else {
 			        if (selected_line.get_unit_price() < selected_line.get_product().standard_price){
-                        self.pos.db.notification('info','Sale price is less then cost price!');
-                        $('.pos .order .orderline.selected').css("background","#F57D7D");
+                        this.pos.db.notification('info','Sale price is less then cost price!');
+                        //$('.pos .order .orderline.selected').css("background","#F57D7D");
                     }
 			    }
 			}
-        },
+        }
+
+        /* 
         render_orderline: function(orderline){
             var el_str  = QWeb.render('Orderline',{widget:this, line:orderline});
             var el_node = document.createElement('tbody');
@@ -554,7 +522,8 @@ odoo.define('smart_system2.screens', function (require) {
 
             orderline.node = el_node;
             return el_node;
-        },
+        }
+
         renderElement: function(scrollbottom){
         	this._super(scrollbottom);
         	var order_container_width = $('.order-container').width();
@@ -565,113 +534,107 @@ odoo.define('smart_system2.screens', function (require) {
             	$('.order-container').css('border', '4px solid #6d6b6b');
             	$('.order').css('max-width','100%');
             });
-        },
-    });
-	
-	screens.ProductScreenWidget.include({
-    	start: function(){ 
-    		var self = this;
-    		this._super();
-            var pricelist_list = this.pos.prod_pricelists;
-            var new_options = [];
-            new_options.push('<option value="">Select Pricelist</option>\n');
-            if(pricelist_list.length > 0){
-                for(var i = 0, len = pricelist_list.length; i < len; i++){
-                    new_options.push('<option value="' + pricelist_list[i].id + '">' + pricelist_list[i].display_name + '</option>\n');
-                }
-                $('#price_list').html(new_options);
-                var order = self.pos.get('selectedOrder');
-                if(order.get_client() && order.get_client().property_product_pricelist[0]){
-                	$('#price_list').val(order.get_client().property_product_pricelist[0]);
-                }
-                $('#price_list').selectedIndex = 0;
-            }
-            $('#price_list').on('change', function() {
-                var partner_id = self.pos.get('selectedOrder').get_client() && parseInt(self.pos.get('selectedOrder').get_client().id);
-                if (!partner_id) {
-                	$('#price_list').html(new_options);
-                    alert('Pricelist will not work as customer is not selected !');
-                    return;
-                }
-            });
-    	},
-    });
+        }*/
+    };
 
-    screens.ActionpadWidget.include({
-        renderElement: function() {
-            var self = this;
-            var debtjournal = false;
-            this._super();
-            _.each(self.pos.cashregisters, function(cashregister) {
+	const PosActionpad = (_Actionpad) => class extends _Actionpad {
+        constructor() {
+            super(...arguments);
+
+            this.state = useState({
+                debtjournal: false,
+                enable_debit : this.pos.config.enable_debit,
+            });
+
+            this.pos.cashregisters.forEach(function(cashregister) {
                 if (cashregister.journal.debt) {
-                    debtjournal = cashregister.journal_id[0];
+                    this.state.debtjournal = cashregister.journal_id[0];
                 }
             });
-            var currentOrder = self.pos.get_order();
-            if (self.pos.config.enable_debit){
-                this.$('.pay').unbind('click').click(function(){
-                    var order = self.pos.get_order();
-                    var has_valid_product_lot = _.every(order.orderlines.models, function(line){
-                        return line.has_valid_product_lot();
-                    });
-                    if(!has_valid_product_lot){
-                        self.gui.show_popup('confirm',{
-                            'title': _t('Empty Serial/Lot Number'),
-                            'body':  _t('One or more product(s) required serial/lot number.'),
-                            confirm: function(){
-                                self.gui.show_screen('payment');
-                            },
-                        });
-                    }else{
-                        self.gui.show_screen('payment');
-                    }
-                    self.$('.set-customer').click(function(){
-                        self.gui.show_screen('clientlist');
-                    });
-                    if (order.get_orderlines().length> 0 && debtjournal && !order.get_edit_pos_order()){
-                        self.pos.gui.screen_instances.payment.click_paymentmethods(debtjournal);
-                        if(order.selected_paymentline){
-                            order.selected_paymentline.set_amount( Math.max(order.get_total_with_tax(),0) );
-                        }
-                        
-                    }
+        }
+        
+        //.pay
+        click_pay()
+        {
+            if(!this.state.enable_debit)
+                return;
+
+            let order = this.pos.get_order();
+            let has_valid_product_lot = _.every(order.orderlines.models, function(line){
+                return line.has_valid_product_lot();
+            });
+
+            if(!has_valid_product_lot){
+                this.gui.show_popup('confirm',{
+                    'title': _t('Empty Serial/Lot Number'),
+                    'body':  _t('One or more product(s) required serial/lot number.'),
+                    confirm: function(){
+                        this.gui.show_screen('payment');
+                    },
                 });
             }
-        },
-    });
+            else
+            {
+                this.gui.show_screen('payment');
+            }
 
-    screens.ClientListScreenWidget.include({
-    	save_changes: function(){
-    		this._super();
+            if (order.get_orderlines().length> 0 && this.state.debtjournal && !order.get_edit_pos_order()){
+                this.pos.gui.screen_instances.payment.click_paymentmethods(debtjournal);
+                if(order.selected_paymentline){
+                    order.selected_paymentline.set_amount( Math.max(order.get_total_with_tax(),0) );
+                }
+            }
+        }
+
+        //.set-customer
+        click_set_customer()
+        {
+            this.gui.show_screen('clientlist');
+        }
+
+    };
+
+    const PosClientListScreen = (_ClientListScreen) => class extends _ClientListScreen {
+        constructor() {
+            super(...arguments);
+
+            this.state = useState({
+                price_list: "", //#price_list
+            });
+        }
+
+        save_changes(){
             if( this.has_client_changed()){
             	if(this.new_client){
             		this.pos.get_order().set_pricelist_val(this.new_client.id);
             	} else {
-            		$('#price_list').val('');
+                    this.state.price_list = "";
             	}
             }
-        },
-    });
+        }
+    };
 
-    screens.ReceiptScreenWidget.include({
-        renderElement: function(){
-            var self = this;
-            this._super();
-            this.$('.button.print_pdf').click(function(){
-                if (!self._locked) {
-                    // generate the pdf and download it
-                    if(self.pos.order_to_print){
-                    	self.chrome.do_action('smart_system2.report_pos_receipt', {additional_context:{
-                            active_ids:[self.pos.order_to_print],
-                        }});
-                    }
+    const PosReceiptScreen = (_ReceiptScreen) => class extends _ReceiptScreen {
+        constructor() {
+            super(...arguments);
+        }
+
+        //.button.print_pdf
+        print_pdf()
+        {
+            if (!this._locked) {
+                // generate the pdf and download it
+                if(this.pos.order_to_print){
+                    this.chrome.do_action('smart_system2.report_pos_receipt', {additional_context:{
+                        active_ids:[this.pos.order_to_print],
+                    }});
                 }
-            });
-        },
-        render_receipt: function() {
-            this._super();
-            var order = this.pos.get_order();
-            var print_locations = order.get_order_stock_location();
+            }
+        }
+
+        render_receipt() {
+            let order = this.pos.get_order();
+            let print_locations = order.get_order_stock_location();
             if (print_locations){
                 for (var key in print_locations) {
                         this.$('.pos-receipt-container').append(QWeb.render('store_location_receipt',{
@@ -682,50 +645,148 @@ odoo.define('smart_system2.screens', function (require) {
                     }));    
                 }
             }
-        },
-        print_xml: function() {
-            var self = this;
-            var order = this.pos.get_order();
-            this._super();
+        }
+
+        print_xml()
+        {
+            let order = this.pos.get_order();
             if (this.pos.config.enable_multi_sale_location){
-                var print_locations = order.get_order_stock_location();
+                let print_locations = order.get_order_stock_location();
                 if (print_locations){
-                    for (var key in print_locations) {
-                        var param = {
+                    for (let key in print_locations) {
+                        let param = {
                             widget:this,
                             data:print_locations[key],
                             order: order,
                             receipt: order.export_for_printing(),
                         }
-                        var store_location_receipt = QWeb.render('xml_store_location_receipt', param);
-                        self.pos.proxy.print_receipt(store_location_receipt);
-//                        self.dialog = new Dialog(this, {
-//                            title: 'Testing receipt',
-//                            $content: store_location_receipt,
-//                        }).open();
+                        let store_location_receipt = QWeb.render('xml_store_location_receipt', param);
+                        this.pos.proxy.print_receipt(store_location_receipt);
                     }
                 }
             }
+        }
+    };
+
+    Registries.Component.extend(ProductScreen, PosProductScreen);
+    Registries.Component.extend(ProductCategories, PosProductCategories);
+    Registries.Component.extend(ProductList, PosProductList);
+    Registries.Component.extend(PaymentScreen, PosPaymentScreen);
+    Registries.Component.extend(Order, PosOrder);
+    Registries.Component.extend(Actionpad, PosActionpad);
+    Registries.Component.extend(ClientListScreen, PosClientListScreen);
+    Registries.Component.extend(ReceiptScreen, PosReceiptScreen);
+
+    
+    /*
+    var screens   = require('point_of_sale.screens');
+    var pos_model = require('point_of_sale.models');
+    var Model     = require('web.Model');
+    var core      = require('web.core');
+    const {Gui}   = require("point_of_sale.Gui");
+
+    //var db = require('point_of_sale.DB');
+    //var Dialog = require('web.Dialog');
+
+    var QWeb = core.qweb;
+    var time = require('web.time');
+
+    var _t = core._t;
+     */
+
+    //AddProductButton
+    class AddProductButton extends PosComponent{
+        constructor() {
+            super(...arguments);
+            useListener('click', this.onClick);
+        }
+        onClick() {
+            this.gui.show_popup('add_product_popup');
+        }
+    }
+    ProductScreen.addControlButton({
+        component: AddProductButton,
+        condition: function() {
+            return this.this.pos.config.enable_add_product;
         },
     });
-    /* Order List */
-    var ShowOrderList = screens.ActionButtonWidget.extend({
-	    template : 'ShowOrderList',
-	    button_click : function() {
-	        self = this;
-	        self.gui.show_screen('orderlist');
-	    },
-	});
+    Registries.Component.add(AddProductButton);
 
-	screens.define_action_button({
-	    'name' : 'showorderlist',
-	    'widget' : ShowOrderList,
-        'condition': function(){
-            return this.pos.config.enable_order_list;
+    //PayFullDebt
+    class PayFullDebt extends PosComponent{
+        constructor() {
+            super(...arguments);
+            useListener('click', this.onClick);
+        }
+        onClick() {
+            this.gui.show_popup('PayDebtPopupWidget');
+        }
+    }
+    ProductScreen.addControlButton({
+        component: PayFullDebt,
+        condition: function() {
+            return this.this.pos.config.enable_debit;
         },
-	});
+    });
+    Registries.Component.add(PayFullDebt);
 
-    /* Order list screen */
+    //PayFullDebt
+    class AddNoteButton extends PosComponent{
+        constructor() {
+            super(...arguments);
+            useListener('click', this.onClick);
+        }
+        onClick() {
+            let order    = this.pos.get_order();
+            let lines    = order.get_orderlines();
+            if(lines.length > 0) {
+                if (order.get_selected_orderline()) {
+                    this.gui.show_popup('add_note_popup');
+                }
+            } else {
+                alert("Please select the product !");
+            }
+        }
+    }
+    ProductScreen.addControlButton({
+        component: AddNoteButton,
+        condition: function() {
+            return this.this.pos.config.enable_product_note;
+        },
+    });
+    Registries.Component.add(AddNoteButton);
+
+    //ShowOrderList
+    class ShowOrderList extends PosComponent{
+        constructor() {
+            super(...arguments);
+            useListener('click', this.onClick);
+        }
+        onClick() {
+            this.gui.show_popup('orderlist');
+        }
+    }
+    ProductScreen.addControlButton({
+        component: ShowOrderList,
+        condition: function() {
+            return this.this.pos.config.enable_order_list;
+        },
+    });
+    Registries.Component.add(ShowOrderList);
+
+    return {
+        ProductScreen,
+        ProductCategories,
+        ProductList,
+        PaymentScreen,
+        Order,
+        Actionpad,
+        ClientListScreen,
+        ReceiptScreen
+    };
+
+
+    /* Order list screen 
 	var OrderListScreenWidget = screens.ScreenWidget.extend({
 	    template: 'OrderListScreenWidget',
 
@@ -1248,4 +1309,5 @@ odoo.define('smart_system2.screens', function (require) {
 	    },
 	});
 	gui.define_screen({name:'orderlist', widget: OrderListScreenWidget});
+    */
 });
