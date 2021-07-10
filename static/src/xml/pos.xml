@@ -38,8 +38,11 @@
             <tr class="selection-area">
                 <td style="padding: 5px;text-align:left;">
                     <t t-if="widget.pos.config.enable_pricelist">
-                        <select name="price_list" id="price_list" style="height:25px; margin-top: -1px; font-size: 15px; 
+                        <select name="price_list" id="price_list" t-model="state.pricelist_selector" style="height:25px; margin-top: -1px; font-size: 15px; 
                         border: 1px solid #CCCCCC; border-radius: 3px; background: #6EC89B;color:white;">
+                            <t t-foreach="state.new_options" t-as="opt">
+                                <option t-att-value="opt.value"><t t-esc="opt.title"/></option>
+                            </t>
                         </select>
                     </t> 
                 </td>
@@ -98,7 +101,7 @@
 
     <t t-extend="ActionpadWidget">
         <xpath expr="//t[@t-if*='!widget.pos.get_client()']" t-operation="after">
-            <t t-if = "widget.pos.config.enable_debit">
+            <t t-if="widget.pos.config.enable_debit">
                 <br/>
                 <span t-attf-class="client-debt #{(widget.pos.get_client() and widget.pos.get_client().debt lt 0) ? 'negative' : ''} #{(widget.pos.get_client() and widget.pos.get_client().debt gt 0) ? 'positive' : ''}">
                     <t t-esc="(widget.pos.get_client() and widget.pos.get_client().debt_type == 'debt' ? ' [Debt: ' + (Math.round(widget.pos.get_client().debt * 100) / 100).toString() + ']': '')"/>
