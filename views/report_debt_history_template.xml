@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+ <data>
+
+        <template id="report_debt_history_template">
+            <t t-call="report.html_container">
+                <t t-as="o" t-foreach="doc_ids">
+                    <t t-call="report.external_layout">
+                        <t t-if="o.partner_id and o.partner_id.lang">
+                            <t t-set="o" t-value="o.with_context({'lang':o.partner_id.lang})" />
+                        </t>
+                        <div class="page">
+                            <div class="row">
+                                <div name="customer_address" class="col-xs-5 col-xs-offset-7">
+                                    <address t-field="o.partner_id"
+                                        t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                                    <span t-if="o.partner_id.vat">TIN: <span t-field="o.partner_id.vat"/></span>
+                                </div>
+                            </div>
+                            <h2>Debt History</h2>
+                            <div class="row mt32 mb32">
+                                <div class="col-xs-2" t-if="o.start_date">
+                                    <strong>From:</strong>
+                                    <p t-field="o.start_date"/>
+                                </div>
+                                <div class="col-xs-2" t-if="o.end_date">
+                                    <strong>To:</strong>
+                                    <p t-field="o.end_date"/>
+                                </div>
+                            </div>
+                            <table class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th class="text-right">Date/Time</th>
+                                        <th class="text-right">Ticket</th>
+                                        <th class="text-right">Point Of Sale</th>
+                                        <th class="text-right">Purchase Credits(In)</th>
+                                        <th class="text-right">Credits Spent(Out)</th>
+                                        <th class="text-right">Balance</th>
+                                        <th class="text-right">Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <span t-as="records" t-foreach="o.partner_id.debt_history(0, o.start_date, o.end_date)">
+                                        <tr t-foreach="records_value['history']" t-as="record">
+                                            <t t-set="order_obj" t-value="o.partner_id.get_order_by_id(record.get('order_id')[0])" />
+                                            <td class="text-right"><span t-esc="record.get('date')" /></td>
+                                            <td class="text-right"><span t-esc="order_obj.pos_reference" /></td>
+                                            <td class="text-right"><span t-esc="record.get('config_id')[1]" /></td>
+                                            <td class="text-right">
+                                                <t t-if="record.get('balance') and record.get('balance') &gt; 0">
+                                                    <span t-esc="record.get('balance')" />
+                                                </t>
+                                                <t t-if="record.get('balance') and record.get('balance') &lt; 0">
+                                                    -
+                                                </t>
+                                            </td>
+                                            <td class="text-right">
+                                                <t t-if="record.get('balance') and record.get('balance') &lt; 0">
+                                                    <span t-esc="(record.get('balance') * -1)" />
+                                                </t>
+                                                <t t-if="record.get('balance') and record.get('balance') &gt; 0">
+                                                    -
+                                                </t>
+                                            </td>
+                                            <td class="text-right"><span t-esc="record.get('total_bal')" /></td>
+                                            <td class="text-right"><span t-esc="order_obj.note" /></td>
+                                        </tr>
+                                    </span>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+
+    </data>
+</odoo>
+
+
+

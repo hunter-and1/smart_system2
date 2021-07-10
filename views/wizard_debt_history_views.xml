@@ -1,0 +1,27 @@
+<odoo>
+    <data>
+
+        <record id="wizard_debt_history" model="ir.ui.view">
+			<field name="name">Debt History</field>
+			<field name="model">wizard.debt.history</field>
+			<field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field name="partner_id" domain="[['customer', '=', 'True']]"/>
+                    </group>
+                    <group>
+                        <field name="start_date"/>
+                    </group>
+                    <group>
+                        <field name="end_date"/>
+                    </group>
+                    <footer>
+						<button name="print_debt_history" class="btn-primary" string="Print" type="object" />
+						<button string="Cancel" class="oe_link" special="cancel" />
+					</footer>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

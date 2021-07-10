@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<record id="aspl_view_pos_config_form" model="ir.ui.view">
+			<field name="name">pos.config.form.view.inherit</field>
+			<field name="model">pos.config</field>
+			<field name="inherit_id" ref="point_of_sale.view_pos_config_form"/>
+			<field name="arch" type="xml">
+                <group name="features" position="after">
+                    <group name="smart_system2" string="Smart System" col="4">
+                        <field name="enable_pricelist"/>
+                        <field name="enable_add_product"/>
+                        <field name="enable_order_note"/>
+                        <field name="enable_product_note"/>
+                        <field name="enable_cart_detail"/>
+                        <field name="enable_debit"/>
+                        <field name="debt_dummy_product_id" attrs="{'invisible':[('enable_debit','!=',True)],
+                        'required':[('enable_debit','==',True)]}"/>
+                        <field name="paid_amount_product" attrs="{'invisible':[('enable_order_list','!=',True)],
+                        'required':[('enable_order_list','==',True)]}" />
+                        <field name="enable_show_qty_on_pos"/>
+                        <field name="enable_show_cost_price"/>
+                        <field name="enable_margin"/>
+                        <field name="enable_multi_sale_location"/>
+                        <field name="last_days"/>
+                        <field name="record_per_page"/>
+                        <field name="enable_order_list"/>
+                        <field name="enable_product_sync"/>
+                    </group>
+                </group>
+            </field>
+        </record>
+
+        <record id="aspl_order_inherited_form_view" model="ir.ui.view">
+            <field name="name">pos.order.inherited.view</field>
+            <field name="model">pos.order</field>
+            <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+            <field name="arch" type="xml">
+                <field name="price_unit" position="before">
+                    <field name="line_note"/>
+                    <field name="line_margin" />
+                </field>
+                <field name="amount_total" position="after">
+                    <field name="total_margin" />
+                </field>
+            </field>
+        </record>
+
+        <record id="view_account_journal_pos_user_form" model="ir.ui.view">
+            <field name="name">pos_debt_notebook.account_journal_form</field>
+            <field name="model">account.journal</field>
+            <field name="inherit_id" ref="point_of_sale.view_account_journal_pos_user_form"/>
+            <field name="arch" type="xml">
+                <field name="journal_user" position="after">
+                    <field name="debt" attrs="{'invisible': [('journal_user', '=', False)]}"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_debt_sale_config_settings_form_pos" model="ir.ui.view">
+            <field name="name">pos.config.settings.form</field>
+            <field name="model">pos.config.settings</field>
+            <field name="inherit_id" ref="point_of_sale.pos_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='module_pos_reprint']" position="after">
+                    <field name="debt_type" widget="radio"/>
+                    <field name="debt_limit" class="oe_inline"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="product_template_form_view" model="ir.ui.view">
+            <field name="name">product.template.form.debt</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="point_of_sale.product_template_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='properties']">
+                    <group>
+                        <field name="credit_product"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="product_product_form_view" model="ir.ui.view">
+            <field name="name">product.product.form</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <field name="available_in_pos" position="before">
+                    <field name="temp_qty_available" invisible="1"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="res_users_form_view_inherit" model="ir.ui.view">
+			<field name="name">res.users.form.view</field>
+			<field name="model">res.users</field>
+			<field name="inherit_id" ref="point_of_sale.res_users_form_view" />
+			<field name="arch" type="xml">
+				<field name="barcode" position="before">
+					<field name="default_pos" />
+				</field>
+			</field>
+		</record>
+
+        <record id="action_print_debt_history" model="ir.actions.act_window">
+			<field name="name">Debt History</field>
+            <field name="type">ir.actions.act_window</field>
+			<field name="res_model">wizard.debt.history</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+            <field name="target">new</field>
+		</record>
+
+        <record id="action_print_profit_margin" model="ir.actions.act_window">
+			<field name="name">Profit Margin</field>
+            <field name="type">ir.actions.act_window</field>
+			<field name="res_model">wizard.profit.margin</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+            <field name="target">new</field>
+		</record>
+
+        <record id="action_print_customers_debt" model="ir.actions.act_window">
+			<field name="name">Customers Debts</field>
+            <field name="type">ir.actions.act_window</field>
+			<field name="res_model">wizard.customers.debts</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+            <field name="target">new</field>
+		</record>
+
+        <menuitem id="print_debt_history" name="Debt History" parent="point_of_sale.menu_point_rep"
+			action="action_print_debt_history" sequence="5"/>
+
+        <menuitem id="print_profit_margin" name="Profit Margin" parent="point_of_sale.menu_point_rep"
+			action="action_print_profit_margin" sequence="6"/>
+
+        <menuitem id="print_customers_debts" name="Customers Debts" parent="point_of_sale.menu_point_rep"
+			action="action_print_customers_debt" sequence="7"/>
+
+    </data>
+</openerp>

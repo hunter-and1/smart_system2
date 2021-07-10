@@ -1,0 +1,27 @@
+<odoo>
+    <data>
+
+        <record id="wizard_profit_margin" model="ir.ui.view">
+			<field name="name">Profit Margin</field>
+			<field name="model">wizard.profit.margin</field>
+			<field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field name="partner_id" domain="[['customer', '=', 'True']]"/>
+                    </group>
+                    <group>
+                        <field name="start_date"/>
+                    </group>
+                    <group>
+                        <field name="end_date"/>
+                    </group>
+                    <footer>
+						<button name="print_profit_margin" class="btn-primary" string="Print" type="object" />
+						<button string="Cancel" class="oe_link" special="cancel" />
+					</footer>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

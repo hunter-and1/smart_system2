@@ -1,0 +1,1032 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+     <t t-name="PayFullDebt">
+        <span class="control-button">
+            <i class="fa fa-money" aria-hidden="true"></i>
+            دفع الدين
+        </span>
+    </t>
+
+	<t t-name="PayDebtPopupWidget">
+        <div class="modal-dialog">
+            <div class="popup popup-textinput" style="height: 300px;width: 350px;">
+                <p class="title">دفع الدين</p>
+                <div class="pay_debit_container">
+                	<div style="margin: 25px;">
+                		<input id="pay_debit_customer" placeholder="Customer" style="width: 200px;"></input>
+                	</div>
+                	<div>
+                		<input id="pay_debit_amount" placeholder="Amount" style="width: 200px;"></input>
+                	</div>
+                </div>
+                <div class="footer">
+                    <div class="button confirm">
+                        دفع
+                    </div>
+                    <div class="button cancel">
+                         إلغاء
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+     <!-- Pricelist module  -->
+     <t t-extend="ProductScreenWidget">
+        <t t-jquery="tr.header-row" t-operation="before">
+            <tr class="selection-area">
+                <td style="padding: 5px;text-align:left;">
+                    <t t-if="widget.pos.config.enable_pricelist">
+                        <select name="price_list" id="price_list" style="height:25px; margin-top: -1px; font-size: 15px; 
+                        border: 1px solid #CCCCCC; border-radius: 3px; background: #6EC89B;color:white;">
+                        </select>
+                    </t> 
+                </td>
+            </tr>
+        </t>
+    </t>
+
+    <!-- Add product module -->
+    <t t-name="AddProductButton">
+        <div class="control-button js_add_product">
+           إضافة منتوج
+        </div>
+    </t>
+
+    <!-- debt NoteBook -->
+    <t t-name="PaypadButtonWidget">
+        <t t-if="widget.pos.config.enable_debit">
+            <button t-attf-class="paypad-button #{widget.cashregister.journal.debt and 'debt' or ''}" t-att-cash-register-id="widget.cashregister.id">
+               <t t-esc="widget.cashregister.journal.name"/>
+            </button>
+        </t>
+    </t>
+
+    <!-- Product Sync -->
+    <t t-extend="ProductCategoriesWidget">
+        <t t-jquery="div.searchbox" t-operation="after">
+            <t t-if="widget.pos.config.enable_product_sync">
+                <i id="syncbutton" class="fa fa-refresh" aria-hidden="true" style="font-size: 26px;position: absolute;right: 180px;top:10px; cursor: pointer;margin-top: 35px;"></i>
+            </t>
+        </t>
+    </t>
+
+    <t t-extend="ClientDetails">
+        <t t-jquery=".client-details-right" t-operation="append">
+            <t t-if= "widget.pos.config.enable_debit">
+                <div t-if="partner.debt_type == 'debt'" class="client-detail">
+                    <span class='label'>دين</span>
+                    <span t-attf-class="detail client-debt #{partner.debt gt 0 and 'positive' or partner.debt lt 0 and 'negative' or 'empty'}">
+                        <t t-esc='widget.format_currency(partner.debt)'/>
+                    </span>
+                </div>
+                <div t-if="partner.debt_type == 'credit'" class="client-detail">
+                    <span class='label'>رصيد</span>
+                    <span t-attf-class="detail client-debt #{partner.debt lt 0 and 'negative' or partner.debt gt 0 and 'positive' or 'empty'}">
+                        <t t-esc='widget.format_currency(- partner.debt)'/>
+                    </span>
+                </div>
+            </t>
+        </t>
+        <t t-jquery=".client-details-box" t-operation="after">
+            <t t-if= "widget.pos.config.enable_debit">
+                <div id="loading_history" class="o_spinner oe_hidden"><i class="fa fa-spinner fa-spin fa-4"/></div>
+            </t>
+        </t>
+    </t>
+
+    <t t-extend="ActionpadWidget">
+        <t t-jquery="t[t-if*='!widget.pos.get_client()']" t-operation="after">
+            <t t-if = "widget.pos.config.enable_debit">
+                <br/>
+                <span t-attf-class="client-debt #{(widget.pos.get_client() and widget.pos.get_client().debt lt 0) ? 'negative' : ''} #{(widget.pos.get_client() and widget.pos.get_client().debt gt 0) ? 'positive' : ''}">
+                    <t t-esc="(widget.pos.get_client() and widget.pos.get_client().debt_type == 'debt' ? ' [Debt: ' + (Math.round(widget.pos.get_client().debt * 100) / 100).toString() + ']': '')"/>
+                </span>
+                <span t-attf-class="client-credit #{(widget.pos.get_client() and widget.pos.get_client().debt lt 0) ? 'positive' : ''} #{(widget.pos.get_client() and widget.pos.get_client().debt gt 0) ? 'negative' : ''}">
+                    <t t-esc="(widget.pos.get_client() and widget.pos.get_client().debt_type == 'credit' ? ' [Credit: ' + (- Math.round(widget.pos.get_client().debt * 100) / 100).toString() + ']': '')"/>
+                </span>
+            </t>
+        </t>
+    </t>
+
+    <t t-name="AddProductPopup">
+         <div class="modal-dialog">
+            <div class="popup popup-selection product-popup" >
+                <p class="title">إضافة &amp; تحديث منتج</p>
+                <div class="product-container">
+                    <div id="search_row" style="padding-bottom: 12px;padding-top: 11px;font-size: 14px;border-bottom: 1px solid gray;">
+                        <td><input style="height: 18px;" type="text" id="search" title="Press Enter to search" class="search" placeholder="Search Product"/></td>
+                    </div>
+                    <div class="autocomplete-suggestions" style="position: absolute; width: 268px; max-height: 300px; z-index: 9999;"/>
+                    <table class="product-input-table">
+                        <tr>
+                            <td><label>اسم المنتج </label></td>
+                            <td><input type="text" id="name" class="name" placeholder="Product name" style="height: 32px;background-color:#D2D2FF"/></td>
+                        </tr>
+                        <tr>
+                             <td><label>سعر البيع</label></td>
+                             <td><input style="height: 32px;"  type="text" id="sale_price" class="sale_price" placeholder="Sale Price"/></td>
+                        </tr>
+                        <tr>
+                             <td><label>Barcode</label></td>
+                             <td><input style="height: 32px;" type="text" id="ean13" class="ean13" placeholder="EAN13 Barcode"/></td>
+                        </tr>
+                        <tr>
+                             <td><label>المرجع الداخلي</label></td>
+                             <td><input style="height: 32px;" type="text" id="internal_reference" class="internal_reference" placeholder="Internal Reference"/></td>
+                        </tr>
+                        <tr>
+                             <td><label>سعر التكلفة</label></td>
+                             <td><input style="height: 32px;" type="text" id="cost_price" class="cost_price" placeholder="Cost Price"/></td>
+                        </tr>
+                        <tr>
+                             <td><label>POS الفئة</label></td>
+                             <td><select  style="width: 309px;font-size: 14px;" class="pos_category"></select></td>
+                        </tr>
+                        <tr>
+                             <td><label>الفئة الداخلية</label></td>
+                             <td><select style="width: 309px;font-size: 14px;" class="internal_category"></select></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="footer">
+                    <div class="button saveclose">
+                        حفظ و إغلاق
+                    </div>
+                     <div class="button savenew">
+                        حفظ و إنشاء جديد
+                    </div>
+                    <div class="button cancel">
+                        إلغاء
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <!-- Add note module -->
+    <t t-name="AddNoteButton">
+        <span class="control-button">
+            <i class="fa fa-sticky-note"></i>
+            ملاحظة
+        </span>
+    </t>
+
+    <t t-name="ProductNotePopupWidget">
+        <div class="modal-dialog">
+            <div class="popup popup-textinput">
+                <p class="title">إضافة ملاحظة عن المنتج</p>
+                <textarea id="textarea_note" rows="7" cols="30"></textarea>
+                <div class="footer">
+                    <div class="button confirm">
+                        تم
+                    </div>
+                    <div class="button cancel">
+                        إلغاء 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="StockLocationPopup">
+        <div class="modal-dialog">
+            <div class="popup popup-dropdown">
+                <p class="title">موقع المخزون</p>
+                <t t-if="widget.stock_locations">
+                    <div id= "location-dropdown" style="margin-top: 60px;">
+                        <span style="font-size: 18px;">اختيار موقع المخزون </span><br />
+                        <select id="stock_location" style="width: 250px;">
+                            <t t-foreach="widget.stock_locations" t-as="location">    
+                                <t t-esc="location" />
+                                <option t-att-value="location.id"><t t-esc="location.complete_name"/></option>
+                            </t>
+                        </select>
+                    </div>
+                </t>
+                <div class="footer">
+                    <div class="button confirm">
+                        تغيير
+                    </div>
+                    <div class="button cancel">
+                        إلغاء 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-extend="Orderline">
+        <t t-jquery="[t-attf-class='orderline #{ line.selected ? \'selected\' : \'\' }']" t-operation="replace">
+            <tr t-attf-class="orderline #{ line.selected ? 'selected' : '' }" >
+                <td>
+                    <span class="price">
+                        <t t-esc="widget.format_currency(line.get_display_price())"/>
+                    </span>
+                </td>
+                <td>
+                    <ul class="info-list">
+                        <t t-if="line.get_quantity_str() !== '1' || line.selected ">
+                            <li class="info">
+                                <t t-esc="widget.format_currency(line.get_unit_display_price(),'Product Price')" />
+                            </li>
+                        </t>
+                    </ul>
+                </td>
+                <td>
+                    <span class="product-name">
+                        <t t-esc="line.get_product().display_name"/>
+                        <t t-if="line.get_product().tracking!=='none'">
+                            <i t-attf-class="oe_link_icon fa fa-list oe_icon line-lot-icon #{line.has_valid_product_lot() ? 'oe_green' : 'oe_red' }"/>
+                        </t>
+                    </span>
+                    <t t-if="line.get_discount_str() !== '0'">
+                        <li class="info extra_info">
+                            With a
+                            <em>
+                                <t t-esc="line.get_discount_str()" />%
+                            </em>
+                            خصم
+                        </li>
+                    </t>
+                    <t t-if="widget.pos.config.enable_product_note">
+                        <t t-if="line.get_line_note()">
+                            <li class="info extra_info">
+                                تمت إضافة ملاحظة
+                            </li>
+                        </t>
+                    </t>
+                    <t t-if="widget.pos.config.enable_margin">
+                        <t t-if="line.get_line_margin() or line.get_line_margin()==0">
+                            <li class="info extra_info">
+                                ربح:
+                                <t t-esc="widget.format_currency(line.get_line_margin().toFixed(2))" />
+                            </li>
+                        </t>
+                    </t>
+                    <t t-if="widget.pos.config.enable_multi_sale_location">
+                        <li class="info extra_info">
+                            <div id ='div_stock_location' style ="margin-top: 5px;margin-bottom: 5px;">
+                                <span id ='stock_location' style="cursor: pointer;color: white;background: darkseagreen;height: 20px;padding: 3px;min-width: 10px;">
+                                    <t t-if ="line.get_stock_location()">
+                                        <t t-esc = "line.get_stock_location()[1]"/>
+                                    </t>
+                                </span>
+                            </div>
+                        </li>
+                    </t>
+                </td>
+                <td>
+                    <ul class="info-list">
+                        <t t-if="line.get_quantity_str() !== '1' || line.selected ">
+                            <li class="info">
+                                <em>
+                                    <t t-esc="line.get_quantity_str()" />
+                                </em>
+                                <t t-esc="line.get_unit().name" />
+                                <!--at-->
+                                <!--<t t-esc="widget.format_currency(line.get_unit_display_price(),'Product Price')" />-->
+                                <!--/-->
+                                <!--<t t-esc="line.get_unit().name" />-->
+                            </li>
+                        </t>
+                    </ul>
+                </td>
+            </tr>
+        </t>
+    </t>
+
+    <t t-extend="OrderWidget">
+        <t t-jquery=".subentry" t-operation="append">
+            <br />
+            <table class="cart_extra_info">
+                <tr>
+                    <t t-if="widget.pos.config.enable_margin">
+                        <td>
+                            <div class='margin' style="font-size: 16px;font-weight: normal; text-align: center;">
+                                ربح <br /><span class="value">0.00€</span></div>
+                        </td>
+                    </t>
+                    <t t-if="widget.pos.config.enable_cart_detail">
+                        <td>
+                            <div class='total_qty' style="font-size: 16px;font-weight: normal; text-align: center;">
+                                عدد <br /><span class="value">0.00</span></div>
+                        </td>
+                        <td>
+                            <div class='no_items' style="font-size: 16px;font-weight: normal; text-align: center;">
+                                فئة <br /><span class="value">0.00</span>
+                            </div>
+                        </td>
+
+                    </t>
+
+                </tr>
+            </table>
+        </t>
+        <t t-jquery="ul.orderlines" t-operation="replace">
+            <table class="custom_cart">
+                <colgroup>
+                    <col style="width:15%;"/>
+                    <col style="width:15%;"/>
+                    <col style="width:50%;"/>
+                    <col style="width:20%;"/>
+                </colgroup>
+                <thead>
+                    <th>القيمة</th>
+                    <th>الثمن</th>
+                    <th>المواد</th>
+                    <th>الوحدة</th>
+                </thead>
+                <tbody class="orderlines"></tbody>
+            </table>
+        </t>
+    </t>
+
+    <t t-extend="PaymentScreenWidget">
+        <t t-jquery="div.paymentmethods-container" t-operation="before">
+            <t t-if="widget.pos.config and widget.pos.config.enable_order_note">
+                <div style="text-align: center;margin-top: 15px;">
+                    <span>
+                        <textarea id="order_note" placeholder="Order Notes Here"></textarea>
+                    </span>
+                </div>
+            </t>
+        </t>
+        
+        <t t-jquery="t[t-if*='!widget.pos.get_client()']" t-operation="after">
+            <t t-if = "widget.pos.config.enable_debit">
+                <span t-attf-class="client-debt #{(widget.pos.get_client() and widget.pos.get_client().debt lt 0) ? 'negative' : ''} #{(widget.pos.get_client() and widget.pos.get_client().debt gt 0) ? 'positive' : ''}">
+                    <t t-esc="(widget.pos.get_client() and widget.pos.get_client().debt_type == 'debt' ? ' [Debt: ' + (Math.round(widget.pos.get_client().debt * 100) / 100).toString() + ']': '')"/>
+                </span>
+                <span t-attf-class="client-credit #{(widget.pos.get_client() and widget.pos.get_client().debt lt 0) ? 'positive' : ''} #{(widget.pos.get_client() and widget.pos.get_client().debt gt 0) ? 'negative' : ''}">
+                    <t t-esc="(widget.pos.get_client() and widget.pos.get_client().debt_type == 'credit' ? ' [Credit: ' + (- Math.round(widget.pos.get_client().debt * 100) / 100).toString() + ']': '')"/>
+                </span>
+            </t>
+        </t>
+
+        <t t-jquery=".js_set_customer" t-operation="after">
+            <t t-if = "widget.pos.config.enable_debit">
+                <div class="button pay-full-debt oe_hidden">
+                    <i class='fa fa-money' /> دفع كل الديون
+                </div>
+            </t>
+        </t>
+        <t t-jquery="div.top-content span.next" t-operation="before">
+            <t t-if="widget.pos.config.enable_order_list">
+                <span class='button create_draft highlight' style="right: 0px;margin-right: 160px;">
+                    مسودة
+                    <i class='fa fa-angle-double-right'></i>
+                </span>
+            </t>
+        </t>
+    </t>
+
+    <t t-extend="PaymentScreen-Paymentmethods">
+        <t t-jquery="div.paymentmethods" t-operation="replace">
+            <div class='paymentmethods'>
+                <t t-foreach="widget.pos.cashregisters" t-as="cashregister">
+                    <t t-if='!widget.pos.config.enable_debit and !cashregister.journal.debt'>
+                        <div class="button paymentmethod" t-att-data-id="cashregister.journal_id[0]">
+                            <t t-esc="cashregister.journal_id[1]" />
+                        </div>
+                    </t>
+                    <t t-if='widget.pos.config.enable_debit'>
+                        <div class="button paymentmethod" t-att-data-id="cashregister.journal_id[0]">
+                            <t t-esc="cashregister.journal_id[1]" />
+                        </div>
+                    </t>
+                </t>
+            </div>
+        </t>
+    </t>
+
+    <t t-extend="ClientListScreenWidget">
+        <t t-jquery=".button.next" t-operation="before">
+            <t t-if = "widget.pos.config.enable_debit">
+                <div id="client_list_header_buttons">
+                    <span id="show_debt_history" class="button debt_notebook_button oe_hidden highlight">
+                        عرض تاريخ الديون
+                    </span>
+                    <span id="show_customers" class="button debt_notebook_button oe_hidden highlight">
+                        عرض الزبناء
+                    </span>
+                    <span id="set-customer-pay-full-debt" class="button debt_notebook_button oe_hidden highlight">
+                        دفع كل الديون
+                    </span>
+                </div>
+            </t>
+        </t>
+        <t t-jquery="table.client-list tr" t-operation="append">
+            <t t-if = "widget.pos.config.enable_debit">
+                <th id="client-list-debt">الدين</th>
+                <th id="client-list-credit">الرصيد</th>
+                <th>الدين الأقصى</th>
+            </t>
+        </t>
+        <t t-jquery="table.client-list" t-operation="after">
+            <t t-if = "widget.pos.config.enable_debit">
+                <table id="debt_history" class='client-list oe_hidden'>
+                    <thead>
+                        <tr>
+                            <th>التاريخ/الوقت</th>
+                            <th>نقطة البيع</th>
+                            <th>Purchased Credits (In)</th>
+                            <th>Credits Spent (Out)</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id='debt_history_contents'>
+                    </tbody>
+                </table>
+            </t>
+        </t>
+    </t>
+
+    <t t-extend="ClientLine">
+        <t t-jquery="tr.client-line" t-operation="append">
+            <t t-if = "widget.pos.config.enable_debit">
+                <td t-attf-class="client-debt #{((partner.debt_type == 'debt' and partner.debt lt 0) or (partner.debt_type == 'credit' and partner.debt lt 0)) ? 'negative' : ''} #{((partner.debt_type == 'debt' and partner.debt gt 0) or (partner.debt_type == 'credit' and partner.debt gt 0)) ? 'positive' : ''}">
+                    <t t-if="partner.debt_type == 'debt'" t-esc='widget.round(partner.debt)'/>
+                    <t t-if="partner.debt_type == 'credit'" t-esc='widget.round(-partner.debt)'/>
+                </td>
+                <td>
+                    <t t-esc='partner.debt_limit'/>
+                </td>
+            </t>
+        </t>
+    </t>
+
+    <t t-extend="ClientDetailsEdit">
+       
+        <t t-jquery=".client-details-left" t-operation="append">
+            <t t-if = "widget.pos.config.enable_debit">
+                <div class='client-detail'>
+                    <span class='label label_nowrap'>الافصى *</span>
+                    <input t-attf-class="detail client-credit-limit #{widget.check_user_in_group(widget.pos.config.group_pos_manager_id[0], widget.pos.user.groups_id) ? '' : 'disabled'}" name='debt_limit' t-att-value='partner.debt_limit || ""' placeholder='Max Debt'/>
+                    <!--<input t-attf-class="detail client-credit-limit #{widget.pos.config.group_pos_manager_id[0] in widget.pos.user.groups_id ? '' : 'disabled'}" name='debt_limit' t-att-value='partner.debt_limit || ""' placeholder='Max Debt'/>
+                    This construction will not work after the user's POS right are changed -->
+                </div>
+            </t>
+        </t>
+        <t t-jquery=".client-details-box" t-operation="append">
+            <t t-if = "widget.pos.config.enable_debit">
+                <div class='client-detail-notice'>
+                    * Some fields are editable only for POS managers.
+                </div>
+            </t>
+        </t>
+    </t>
+
+    <t t-name="DebtHistoryLine">
+        <tr>
+            <td><t t-esc="line ? line.date : ''"/></td>
+            <td><t t-esc="line ? line.config_id[1] : ''"/></td>
+            <td><t t-esc="((line and line.balance gt 0) ? (line.balance).toString() : '')"/></td>
+            <td><t t-esc="((line and line.balance lt 0) ? (-line.balance).toString() : '')"/></td>
+            <td>
+                <span t-attf-class="client-#{partner.debt_type} #{(line and line.total_balance lt 0) ? 'negative' : ''} #{(line and line.total_balance gt 0) ? 'positive' : ''}"><t t-esc="(line and line.total_balance ? (line.total_balance).toString() : '')"/></span>
+            </td>
+        </tr>
+    </t>
+    <!-- xml receipt pending form Debit Notebook -->
+
+    <t t-name="PosTicket">
+        <div class="pos-sale-ticket">
+            <div class="pos-center-align" style="border:thin solid black;">
+                <t t-esc="widget.pos.company.name"/><br />
+            </div>
+            <table>
+                <colgroup>
+                    <col width='75%' />
+                    <col width='25%' />
+                </colgroup>
+                <tr>
+                    <td class="pos-right-align"><t t-esc="order.get_date_order() ? order.get_date_order() : moment().format('L LT')" /></td>
+                    <td class="pos-right-align"> :التاريخ</td>
+                </tr>
+                <tr>
+                    <td class="pos-right-align"><t t-esc="order.get_pos_reference() ? order.get_pos_reference() : order.name" /></td>
+                    <td class="pos-right-align"> :الايصال</td>
+                </tr>
+                <tr>
+                    <td class="pos-right-align"><t t-esc="order.get_client() ? order.get_client().debt : ''" /></td>
+                    <td class="pos-right-align"> :الديون</td>
+                </tr>
+                <tr>
+                    <td class="pos-right-align"><t t-esc="order.get_client() ? order.get_client().name : ''" /></td>
+                    <td class="pos-right-align"> :الزبون</td>
+                </tr>
+            </table>
+            <br />
+            <t t-if="receipt.header">
+                <div style='text-align:center'>
+                    <t t-esc="receipt.header" />
+                </div>
+                <br />
+            </t>
+            <table class='receipt-orderlines'>
+                <colgroup>
+                    <col width='25%' />
+                    <col width='50%' />
+                    <col width='25%' />
+                </colgroup>
+                <thead>
+                    <th class="pos-right-align">المجموع</th>
+                    <th class="pos-right-align">السلعة</th>
+                    <th class="pos-right-align">الكمية</th>
+                </thead>
+                <tr t-foreach="orderlines" t-as="orderline">
+                    <td class="pos-right-align">
+                        <t t-esc="widget.format_currency(orderline.get_display_price())"/>
+                    </td>
+                    <td class="pos-right-align">
+                        <t t-esc="orderline.get_product().display_name"/>
+                        <t t-if="orderline.get_line_note()">
+                            <div class="pos-disc-font">
+                                <t t-esc="orderline.get_line_note()"/>
+                            </div>
+                        </t>
+                         <t t-if="orderline.get_discount() > 0">
+                            <div class="pos-disc-font">
+                                With a <t t-esc="orderline.get_discount()"/>% خصم
+                            </div>
+                        </t>
+                    </td>
+                    <td class="pos-right-align">
+                        <t t-esc="orderline.get_quantity_str_with_unit()"/>
+                    </td>
+
+                </tr>
+            </table>
+            <br />
+            <table class='receipt-paymentlines'>
+                <tr>
+                    <td class="pos-right-align">
+                        <t t-esc="widget.format_currency(order.get_total_with_tax())"/>
+                    </td>
+                    <td class="pos-right-align"> :المجموع</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="pos-right-align">الاداء</td>
+                </tr>
+                <t t-foreach="paymentlines" t-as="line">
+                  <tr>
+                      <td class="pos-right-align">
+                          <t t-esc="widget.format_currency(line.get_amount())"/>
+                      </td>
+                      <td  class="pos-right-align">
+                          <t t-esc="line.name"/>
+                      </td>
+                  </tr>
+                </t>
+                <t t-if="order.get_journal()">
+                    <tr t-foreach="order.get_journal()" t-as="line">
+                       <td class="pos-right-align">
+                           <t t-esc="widget.format_currency(line.amount)"/>
+                       </td>
+                       <td class="pos-right-align">
+                           <t t-esc="line.journal"/>
+                       </td>
+                    </tr>
+                </t>
+                <tr>
+                    <td class="pos-right-align">
+                        <t t-if="order.get_amount_return()">
+                            <t t-esc="widget.format_currency(order.get_amount_return())"/>
+                        </t>
+                        <t t-if="!order.get_amount_return()">
+                            <t t-esc="widget.format_currency(order.get_change())"/>
+                        </t>
+                    </td>
+                    <td class="pos-right-align"> :الصرف</td>
+                </tr>
+            </table>
+            <br />
+            <table>
+                <colgroup>
+                    <col width='50%' />
+                    <col width='50%' />
+                </colgroup>
+                <t t-if="widget.pos.config.enable_cart_detail">
+                    <t t-if="order.get_total_qty() or order.get_orderlines().length">
+                        <tr class="receipt-total">
+                            <td class="pos-right-align">
+                                <t t-esc="order.get_total_qty().toFixed(widget.pos.currency.decimals)" />
+                            </td>
+                            <td class="pos-right-align"> :مجموع الوحدات</td>
+                        </tr>
+                        <tr class="receipt-total">
+                            <td class="pos-right-align">
+                                <t t-esc="order.get_orderlines().length" />
+                            </td>
+                            <td class="pos-right-align"> :عدد الوحدات</td>
+                        </tr>
+                    </t>
+                </t>
+            </table>
+            <t t-if="order.get_order_note()">
+                <br />
+                <table>
+                    <tr>
+                        <td style= "word-wrap: break-word;">
+                            <t t-esc="order.get_order_note()" />
+                        </td>
+                        <td class="pos-right-align"> :ملاحظة</td>
+                    </tr>
+                </table>
+            </t>
+            <t t-if="receipt.footer">
+                <br />
+                <div style='text-align:center'>
+                    <t t-esc="receipt.footer" />
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="store_location_receipt">
+        <br />
+        <div class="pos-sale-ticket">
+            <div class="pos-center-align"><t t-esc="moment().format('L LT')"/> <t t-esc="order.name"/></div> <br />
+            <t t-esc="widget.pos.company.name"/><br />
+            Phone: <t t-esc="widget.pos.company.phone || ''"/><br />
+            User: <t t-esc="widget.pos.cashier ? widget.pos.cashier.name : widget.pos.user.name"/><br />
+            <t t-if="data and data[0]">
+                Location: <t t-esc="data[0].get_stock_location()[1]"/><br />
+            </t>
+            <br />
+            <t t-if="receipt.header">
+                <div style='text-align:center'>
+                    <t t-esc="receipt.header" />
+                </div>
+                <br />
+            </t>
+            <table >
+                <t t-foreach="data" t-as="line">
+                  <tr>
+                      <td>
+                          <t t-esc="line.product.name"/>
+
+                      </td>
+                    <td class="pos-right-align">
+                        <t t-esc="line.get_quantity_str_with_unit()"/>
+                    </td>
+                  </tr>
+                </t>
+            </table>
+        </div>
+    </t>
+
+    <t t-name="xml_store_location_receipt">
+        <receipt align='center' width='40' value-thousands-separator='' >
+            <t t-if='receipt.company.logo'>
+                <img t-att-src='receipt.company.logo' />
+                <br/>
+            </t>
+            <t t-if='!receipt.company.logo'>
+                <h1><t t-esc='receipt.company.name' /></h1>
+                <br/>
+            </t>
+            <div font='b'>
+                <t t-if='receipt.company.phone'>
+                    <div>Tel:<t t-esc='receipt.company.phone' /></div>
+                </t>
+                <t t-if="data and data[0]">
+                    Location: <t t-esc="data[0].get_stock_location()[1]"/><br />
+                </t>
+                <t t-if='receipt.header_xml'>
+                    <t t-raw='receipt.header_xml' />
+                </t>
+                <t t-if='!receipt.header_xml and receipt.header'>
+                    <div><t t-esc='receipt.header' /></div>
+                </t>
+            </div>
+            <t t-foreach="data" t-as="line">
+                <line>
+                    <left><t t-esc="line.product.name"/></left>
+                    <right><t t-esc="line.get_quantity_str_with_unit()"/></right>
+                </line>
+            </t>
+        </receipt>
+    </t>
+
+    <t t-extend="XmlReceipt">
+        <t t-jquery="receipt" t-operation="append">
+            <t t-if="widget.pos.config.enable_order_note">
+                <line>
+                    <left>ملاحظة: </left>
+                </line>
+                <div font='b'>
+                    <div><t t-esc='receipt.order_note' /></div>
+                </div>
+            </t>
+        </t>
+        <t t-jquery="[t-if='simple']" t-operation="append">
+            <t t-if="widget.pos.config.enable_product_note">
+                <t t-if="line.line_note">
+                    <line indent='1'><left><t t-esc='line.line_note' /></left></line>
+                </t>
+            </t>
+        </t>
+        <t t-jquery="[t-if='!simple']" t-operation="append">
+            <t t-if="widget.pos.config.enable_product_note">
+                <t t-if="line.line_note">
+                    <line indent='1'><left><t t-esc='line.line_note' /></left></line>
+                </t>
+            </t>
+        </t>
+        <t t-jquery="line.total" t-operation="after">
+            <t t-if="widget.pos.config.enable_cart_detail">
+                <line>
+                    <left>مجموع الوحدات</left>
+                    <right><t t-esc="receipt.total_qty" /></right>
+                </line>
+                <line>    
+                    <left>عدد الوحدات</left>
+                    <right><value><t t-esc="receipt.no_of_item" /></value></right>
+                </line>
+            </t>
+        </t>
+         <t t-jquery=".before-footer" t-operation="before">
+            <t t-if="widget.pos.config.enable_debit">
+                <div t-if="receipt.debt_before or receipt.debt_after" class="debt">
+                    <t t-set="debt_label" t-value="receipt.debt_type=='debt' and 'Debt' or 'Credits'"/>
+                    <t t-set="debt_sign" t-value="receipt.debt_type=='debt' and 1 or -1"/>
+                    <line>
+                        <left>السابق <t t-esc="debt_label"/></left>
+                        <right><value><t t-esc='debt_sign * receipt.debt_before'/></value></right>
+                    </line>
+                    <line>
+                        <left>الجديد <t t-esc="debt_label"/></left>
+                        <right><value><t t-esc='debt_sign * receipt.debt_after'/></value></right>
+                    </line>
+                </div>
+            </t>
+        </t>
+        <t t-jquery="[t-esc='receipt.name']" t-operation="replace">
+    		<t t-esc="receipt.ref ? receipt.ref : receipt.name" />
+    	</t>
+    	<t t-jquery="[t-esc='receipt.date.localestring']" t-operation="replace">
+    		<t t-esc="receipt.date_order ? receipt.date_order : receipt.date.localestring" />
+    	</t>
+        <t t-jquery="[t-foreach='paymentlines']" t-operation="replace">
+    		<t t-if="receipt.reprint_payment">
+    			<t t-foreach='receipt.reprint_payment' t-as='line'>
+                    <line>
+                        <left><t t-esc='line.journal' /></left>
+                        <right>
+                            <value><t t-esc='line.amount'/></value>
+                        </right>
+                    </line>
+                </t>
+    		</t>
+			<t t-if="!receipt.reprint_payment">
+	            <t t-foreach='paymentlines' t-as='line'>
+	                <line>
+	                    <left><t t-esc='line.name' /></left>
+	                    <right><value><t t-esc='line.get_amount()'/></value></right>
+	                </line>
+            	</t>
+            </t>
+            <br/>
+    	</t>
+    </t>
+
+    <!-- Stock Avail module -->
+    <t t-extend="Product" name="ProductStockWidget">
+        <t t-jquery="div.product-img" t-operation="replace">
+            <div class="product-img">
+                <img t-att-src='image_url' /> 
+                <t t-if="!product.to_weight">
+                    <span class="price-tag">
+                        <t t-esc="widget.format_currency(product.price)"/>
+                    </span>
+                    <t t-if="widget.pos.config.enable_show_cost_price">
+                        <span class="cost_price-tag" style="position: absolute;top: 20px;right: 2px;vertical-align: top;color: white;line-height: 13px;background: #7f82ac;padding: 2px 5px;border-radius: 2px;">
+                            <t t-esc="widget.format_currency(product.standard_price)"/>
+                        </span> 
+                    </t>
+                    <t t-if="widget.pos.config.enable_show_qty_on_pos">
+                        <t t-if="product.qty_available>=0">
+                            <span class="product-qty qty_disp" >
+                                <t t-esc="product.qty_available"/>                     
+                            </span>                     
+                        </t>
+                        <t t-if="product.qty_available&lt;0">
+                            <span class="product-qty-low qty_disp" >
+                                <t t-esc="product.qty_available"/>
+                            </span>                     
+                        </t>
+                    </t>    
+                </t>
+                <t t-if="product.to_weight">
+                    <span class="price-tag">
+                        <t t-esc="widget.format_currency(product.price)+'/Kg'"/>
+                    </span>
+                    <t t-if="widget.pos.config.enable_show_cost_price">
+                        <span class="cost_price-tag" style="position: absolute;top: 20px;right: 2px;vertical-align: top;color: white;line-height: 13px;background: #7f82ac;padding: 2px 5px;border-radius: 2px;">
+                            <t t-esc="widget.format_currency(product.standard_price)"/>
+                        </span> 
+                    </t>
+                    <t t-if="widget.pos.config.enable_show_qty_on_pos">
+                        <t t-if="product.qty_available>=0">
+                            <span class="product-qty qty_disp" >
+                                <t t-esc="product.qty_available + ' Kgs'"/>                        
+                            </span>                     
+                        </t>
+                        <t t-if="product.qty_available&lt;0">
+                            <span class="product-qty-low qty_disp" >
+                                <t t-esc="product.qty_available + ' Kgs'"/>
+                            </span>                     
+                        </t>
+                    </t>  
+                </t>
+            </div>        
+        </t>
+        <t t-jquery="div.header-button-name" t-operation="replace">
+            <div class="product-name" style="font-size:15px;text-align:right;">
+                <t t-esc="product.display_name"/>
+            </div>
+        </t>
+    </t>
+
+    <!--Order List-->
+    <t t-name="ShowOrderList">
+        <div class="control-button show_order_list">
+            <i class="fa fa-list" aria-hidden="true"></i>
+            المبيعات
+        </div>
+    </t>
+
+    <t t-name="OrderListScreenWidget">
+        <div class="orderlist-screen screen">
+            <div class="screen-content">
+                <section class="top-content">
+                    <span class='button back'>
+                        <i class='fa fa-angle-double-left'></i>
+                        إلغاء
+                    </span>
+                    <span class='button paid'>
+                        <i class='fa fa-credit-card'></i>
+                        المدفوع
+                    </span>
+                    <span class='button draft'>
+                        <i class='fa fa-file-text'></i>
+                        المؤقت
+                    </span>
+                     <span class='button posted'>
+                        <i class='fa fa-file-text'></i>
+                        Posted
+                    </span>
+                   <span class="date-filter">
+                        <input placeholder="yyyy-mm-dd" type="text" id="datepicker" />
+                    </span>
+                    <span class='button reload'>
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                        إعادة التحميل
+                    </span>
+                    <span class='searchbox'>
+                        <input placeholder='Search orders' style="width: 164px;" />
+                        <span class='search-clear'></span>
+                    </span>
+
+                    <span class='searchbox'></span>
+                </section>
+                <section class="full-content">
+                    <div class='window'>
+                        <section class='subwindow'>
+                            <div class='subwindow-container'>
+                                <div class='subwindow-container-fix touch-scrollable scrollable-y order-list-scroll' style="height:auto;max-height: 490px !important;">
+                                    <div>
+                                        <table class='order-list'>
+                                            <thead>
+                                                <tr>
+                                                    <th><input type="checkbox" id="select_all_orders" /></th>
+                                                    <th>ترتيب الطلب</th>
+                                                    <th>رقم الإيصال</th>
+                                                    <th>الزبون</th>
+                                                    <th>تاريخ الطلبية</th>
+                                                    <th>المجموع</th>
+                                                    <th>الإيصال</th>
+                                                    <th>المنتجات</th>
+                                                    <th>تصحيح</th>
+                                                    <th>إعادة الطلب</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody  class='order-list-contents'>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                                <span class='button validate'>
+                                    <i class="fa fa-check" aria-hidden="true"></i>
+                                    Validate
+                                </span>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+                <div id="pagination">
+                     <div><button class="btn btn-danger" id="first"><i class="fa fa-angle-double-left fa-lg"></i></button></div>
+                     <div><button class="btn btn-danger" id="previous"></button></div>
+                     <div><span class="text" id="text"></span></div>
+                     <div><button class="btn btn-danger" id="next"></button></div>
+                     <div><button class="btn btn-danger" id="last"><i class="fa fa-angle-double-right fa-lg"></i></button></div>
+                 </div>
+
+            </div>
+        </div>
+    </t>
+
+    <t t-name="OrderlistLine">
+        <tr class='client-line' t-att-data-id='order.id'>
+            <td><input type="checkbox" id="select_order" t-att-data-id="order.id"/></td>
+            <td><t t-esc='order.name' /></td>
+            <td><t t-esc='order.pos_reference' /></td>
+            <td><t t-esc='order.partner_id[1]' /></td>
+            <td><t t-esc='order.date_order or ""' /></td>
+            <td><t t-esc='order.amount_total or ""' /></td>
+            <td>
+                <span id="print_order" t-att-data-id='order.id' title="Print Receipt" style="cursor:pointer">
+                    <img src="/smart_system2/static/src/img/print.png" style="height: 30px;" />
+                </span>
+            </td>
+            <td>
+                <span id="products" t-att-data-id='order.id' title="Products" style="cursor:pointer">
+                    <img src="/smart_system2/static/src/img/view.png" style="height: 30px;" />
+                </span>
+            </td>
+            <td>
+                <t t-if="order.state == 'draft'">
+                    <span id="re_order" t-att-data-id='order.id' title="Reorder" style="cursor:pointer;font-size: 27px;">
+                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                    </span>
+                </t>
+            </td>
+            <td align="center">
+                <t t-if="order.state == 'paid' or order.state == 'done'">
+                    <span id="re_order_duplicate" t-att-data-id='order.id' title="Reorder" style="cursor:pointer;font-size: 27px;">
+                        <i class="fa fa-repeat" aria-hidden="true"></i>
+                    </span>
+                </t>
+            </td>
+        </tr>
+    </t>
+
+    <t t-name="ProductPopup">
+         <div class="modal-dialog">
+            <div class="popup popup-reorder-product">
+               <div class="header">
+                   <div class="btn button cancel">
+                        <i class="fa fa-times"></i>
+                   </div>
+                    <p class="title">المنتجات</p>
+                </div>
+                <div style="height: 276px;overflow: auto;">
+                    <table class="popup-product-list table">
+                         <thead>
+                           <tr>
+                               <th>#</th>
+                               <th>المنتوج</th>
+                               <th>الكمية</th>
+                               <th>الثمن</th>
+                               <th>الخصم</th>
+                               <th>الجمع</th>
+                           </tr>
+                       </thead>
+                       <tbody class="popup-product-list-contents">
+                           <t t-if="widget.product_list">
+                             <t t-raw="widget.product_list" />
+                           </t>
+                       </tbody>
+                    </table>
+                </div>
+                <div class="footer">
+                    <t t-if="widget.state == 'draft'">
+                       <button class="button confirm save edit">
+                            <div class="icon"><i class="fa fa-pencil-square-o" aria-hidden="true" height="20" width="20"></i></div>
+                            <div class="text">تصحيح</div>
+                        </button>
+                    </t>
+                    <t t-if="widget.state == 'paid' or widget.state == 'done'">
+                       <button class="button confirm save duplicate">
+                            <div class="icon"><i class="fa fa-repeat" aria-hidden="true" height="20" width="20"></i></div>
+                            <div class="text">طلب</div>
+                        </button>
+                    </t>
+                </div>
+            </div>
+         </div>
+    </t>
+
+    <t t-extend="ReceiptScreenWidget">
+        <t t-jquery="div.button.print" t-operation="after">
+            <div class="button print_pdf">
+                <i class='fa fa-print'></i> Print Qweb
+            </div>
+        </t>
+    </t>
+
+</templates>

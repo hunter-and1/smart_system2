@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="paperformat_pos_receipt" model="report.paperformat">
+            <field name="name">Point Of Sale Receipt</field>
+            <field name="default" eval="True"/>
+            <field name="format">custom</field>
+            <field name="page_height">210</field>
+            <field name="page_width">148</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">25</field>
+            <field name="margin_bottom">3</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">20</field>
+            <field name="dpi">130</field>
+        </record>
+
+        <report
+            id="action_report_pos_session_summary"
+            string="Session Summary"
+            model="pos.session"
+            report_type="qweb-pdf"
+            name="smart_system2.report_sessionsummary"
+            file="smart_system2.report_sessionsummary"
+         />
+
+        <report
+            id="report_pos_receipt"
+            string="Receipt"
+            model="pos.order"
+            report_type="qweb-pdf"
+            name="smart_system2.pos_receipt_report_template"
+            menu="True"
+            paperformat="smart_system2.paperformat_pos_receipt"
+        />
+
+        <report
+            id="report_customers_debts"
+            model="wizard.customers.debts"
+            string="Customers Debts"
+            report_type="qweb-pdf"
+            name="smart_system2.report_customers_debts_template"
+        />
+
+        <report
+            id="report_smart_debt_history"
+            model="wizard.debt.history"
+            string="Debt History"
+            report_type="qweb-pdf"
+            name="smart_system2.report_debt_history_template"
+        />
+
+        <report
+            id="report_smart_profit_margin"
+            model="wizard.profit.margin"
+            string="Profit Margin"
+            report_type="qweb-pdf"
+            name="smart_system2.report_profit_margin_template"
+        />
+
+    </data>
+</openerp>

@@ -1,0 +1,21 @@
+<odoo>
+    <data>
+
+        <record id="wizard_customers_debts" model="ir.ui.view">
+			<field name="name">Customers Debts</field>
+			<field name="model">wizard.customers.debts</field>
+			<field name="arch" type="xml">
+                <form>
+                    Click on Print button to print Customers Debts Report
+                    <footer>
+						<button name="print_customers_debts" class="btn-primary" string="Print" type="object" />
+						<button string="Cancel" class="oe_link" special="cancel" />
+					</footer>
+                </form>
+            </field>
+        </record>
+
+
+
+    </data>
+</odoo>
