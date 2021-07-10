@@ -34,7 +34,7 @@
 
      <!-- Pricelist module  -->
      <t t-extend="ProductScreenWidget">
-        <t t-jquery="tr.header-row" t-operation="before">
+        <xpath expr="//tr[hasclass('header-row')]" t-operation="before">
             <tr class="selection-area">
                 <td style="padding: 5px;text-align:left;">
                     <t t-if="widget.pos.config.enable_pricelist">
@@ -44,7 +44,7 @@
                     </t> 
                 </td>
             </tr>
-        </t>
+        </xpath>
     </t>
 
     <!-- Add product module -->
@@ -65,15 +65,15 @@
 
     <!-- Product Sync -->
     <t t-extend="ProductCategoriesWidget">
-        <t t-jquery="div.searchbox" t-operation="after">
+        <xpath expr="//div[hasclass('searchbox')]" t-operation="after">
             <t t-if="widget.pos.config.enable_product_sync">
                 <i id="syncbutton" class="fa fa-refresh" aria-hidden="true" style="font-size: 26px;position: absolute;right: 180px;top:10px; cursor: pointer;margin-top: 35px;"></i>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="ClientDetails">
-        <t t-jquery=".client-details-right" t-operation="append">
+        <xpath expr="//[hasclass('client-details-right')]" t-operation="append">
             <t t-if= "widget.pos.config.enable_debit">
                 <div t-if="partner.debt_type == 'debt'" class="client-detail">
                     <span class='label'>دين</span>
@@ -89,15 +89,15 @@
                 </div>
             </t>
         </t>
-        <t t-jquery=".client-details-box" t-operation="after">
+        <xpath expr="//[hasclass('client-details-box')]" t-operation="after">
             <t t-if= "widget.pos.config.enable_debit">
                 <div id="loading_history" class="o_spinner oe_hidden"><i class="fa fa-spinner fa-spin fa-4"/></div>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="ActionpadWidget">
-        <t t-jquery="t[t-if*='!widget.pos.get_client()']" t-operation="after">
+        <xpath expr="//t[@t-if*='!widget.pos.get_client()']" t-operation="after">
             <t t-if = "widget.pos.config.enable_debit">
                 <br/>
                 <span t-attf-class="client-debt #{(widget.pos.get_client() and widget.pos.get_client().debt lt 0) ? 'negative' : ''} #{(widget.pos.get_client() and widget.pos.get_client().debt gt 0) ? 'positive' : ''}">
@@ -107,7 +107,7 @@
                     <t t-esc="(widget.pos.get_client() and widget.pos.get_client().debt_type == 'credit' ? ' [Credit: ' + (- Math.round(widget.pos.get_client().debt * 100) / 100).toString() + ']': '')"/>
                 </span>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-name="AddProductPopup">
@@ -298,7 +298,7 @@
     </t>
 
     <t t-extend="OrderWidget">
-        <t t-jquery=".subentry" t-operation="append">
+        <xpath expr="//[hasclass('subentry')]" t-operation="append">
             <br />
             <table class="cart_extra_info">
                 <tr>
@@ -323,8 +323,8 @@
 
                 </tr>
             </table>
-        </t>
-        <t t-jquery="ul.orderlines" t-operation="replace">
+        </xpath>
+        <xpath expr="//ul[hasclass('orderlines')]" t-operation="replace">
             <table class="custom_cart">
                 <colgroup>
                     <col style="width:15%;"/>
@@ -340,11 +340,11 @@
                 </thead>
                 <tbody class="orderlines"></tbody>
             </table>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="PaymentScreenWidget">
-        <t t-jquery="div.paymentmethods-container" t-operation="before">
+        <xpath expr="//div[hasclass('paymentmethods-container')]" t-operation="before">
             <t t-if="widget.pos.config and widget.pos.config.enable_order_note">
                 <div style="text-align: center;margin-top: 15px;">
                     <span>
@@ -352,7 +352,7 @@
                     </span>
                 </div>
             </t>
-        </t>
+        </xpath>
         
         <t t-jquery="t[t-if*='!widget.pos.get_client()']" t-operation="after">
             <t t-if = "widget.pos.config.enable_debit">
@@ -365,25 +365,25 @@
             </t>
         </t>
 
-        <t t-jquery=".js_set_customer" t-operation="after">
+        <xpath expr="//div[hasclass('js_set_customer')]" t-operation="after">
             <t t-if = "widget.pos.config.enable_debit">
                 <div class="button pay-full-debt oe_hidden">
                     <i class='fa fa-money' /> دفع كل الديون
                 </div>
             </t>
-        </t>
-        <t t-jquery="div.top-content span.next" t-operation="before">
+        </xpath>
+        <xpath expr="//div[hasclass('top-content')]/span[hasclass('next')]" t-operation="before">
             <t t-if="widget.pos.config.enable_order_list">
                 <span class='button create_draft highlight' style="right: 0px;margin-right: 160px;">
                     مسودة
                     <i class='fa fa-angle-double-right'></i>
                 </span>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="PaymentScreen-Paymentmethods">
-        <t t-jquery="div.paymentmethods" t-operation="replace">
+        <xpath expr="//div[hasclass('paymentmethods')]" t-operation="replace">
             <div class='paymentmethods'>
                 <t t-foreach="widget.pos.cashregisters" t-as="cashregister">
                     <t t-if='!widget.pos.config.enable_debit and !cashregister.journal.debt'>
@@ -398,11 +398,11 @@
                     </t>
                 </t>
             </div>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="ClientListScreenWidget">
-        <t t-jquery=".button.next" t-operation="before">
+        <xpath expr="//[contains(@class, 'button') and contains(@class, 'next')]" t-operation="before">
             <t t-if = "widget.pos.config.enable_debit">
                 <div id="client_list_header_buttons">
                     <span id="show_debt_history" class="button debt_notebook_button oe_hidden highlight">
@@ -416,15 +416,15 @@
                     </span>
                 </div>
             </t>
-        </t>
-        <t t-jquery="table.client-list tr" t-operation="append">
+        </xpath>
+        <xpath expr="//table[hasclass('client-list')]/tr" t-operation="append">
             <t t-if = "widget.pos.config.enable_debit">
                 <th id="client-list-debt">الدين</th>
                 <th id="client-list-credit">الرصيد</th>
                 <th>الدين الأقصى</th>
             </t>
-        </t>
-        <t t-jquery="table.client-list" t-operation="after">
+        </xpath>
+        <xpath expr="//table[hasclass('client-list')]" t-operation="after">
             <t t-if = "widget.pos.config.enable_debit">
                 <table id="debt_history" class='client-list oe_hidden'>
                     <thead>
@@ -440,11 +440,11 @@
                     </tbody>
                 </table>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="ClientLine">
-        <t t-jquery="tr.client-line" t-operation="append">
+        <xpath expr="//tr[hasclass('client-line')]" t-operation="append">
             <t t-if = "widget.pos.config.enable_debit">
                 <td t-attf-class="client-debt #{((partner.debt_type == 'debt' and partner.debt lt 0) or (partner.debt_type == 'credit' and partner.debt lt 0)) ? 'negative' : ''} #{((partner.debt_type == 'debt' and partner.debt gt 0) or (partner.debt_type == 'credit' and partner.debt gt 0)) ? 'positive' : ''}">
                     <t t-if="partner.debt_type == 'debt'" t-esc='widget.round(partner.debt)'/>
@@ -454,12 +454,12 @@
                     <t t-esc='partner.debt_limit'/>
                 </td>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-extend="ClientDetailsEdit">
        
-        <t t-jquery=".client-details-left" t-operation="append">
+        <xpath expr="//[hasclass('client-details-left')]" t-operation="append">
             <t t-if = "widget.pos.config.enable_debit">
                 <div class='client-detail'>
                     <span class='label label_nowrap'>الافصى *</span>
@@ -468,14 +468,14 @@
                     This construction will not work after the user's POS right are changed -->
                 </div>
             </t>
-        </t>
-        <t t-jquery=".client-details-box" t-operation="append">
+        </xpath>
+        <xpath expr="//[hasclass('client-details-box')]" t-operation="append">
             <t t-if = "widget.pos.config.enable_debit">
                 <div class='client-detail-notice'>
                     * Some fields are editable only for POS managers.
                 </div>
             </t>
-        </t>
+        </xpath>
     </t>
 
     <t t-name="DebtHistoryLine">
@@ -551,7 +551,7 @@
                             <div class="pos-disc-font">
                                 With a <t t-esc="orderline.get_discount()"/>% خصم
                             </div>
-                        </t>
+                        </xpath>
                     </td>
                     <td class="pos-right-align">
                         <t t-esc="orderline.get_quantity_str_with_unit()"/>
@@ -712,7 +712,7 @@
     </t>
 
     <t t-extend="XmlReceipt">
-        <t t-jquery="receipt" t-operation="append">
+        <xpath expr="//receipt" t-operation="append">
             <t t-if="widget.pos.config.enable_order_note">
                 <line>
                     <left>ملاحظة: </left>
@@ -721,22 +721,22 @@
                     <div><t t-esc='receipt.order_note' /></div>
                 </div>
             </t>
-        </t>
-        <t t-jquery="[t-if='simple']" t-operation="append">
+        </xpath>
+        <xpath expr="//[@t-if='simple']" t-operation="append">
             <t t-if="widget.pos.config.enable_product_note">
                 <t t-if="line.line_note">
                     <line indent='1'><left><t t-esc='line.line_note' /></left></line>
                 </t>
             </t>
-        </t>
-        <t t-jquery="[t-if='!simple']" t-operation="append">
+        </xpath>
+        <xpath expr="//[@t-if='!simple']" t-operation="append">
             <t t-if="widget.pos.config.enable_product_note">
                 <t t-if="line.line_note">
                     <line indent='1'><left><t t-esc='line.line_note' /></left></line>
                 </t>
             </t>
-        </t>
-        <t t-jquery="line.total" t-operation="after">
+        </xpath>
+        <xpath expr="//line[hasclass(total)]" t-operation="after">
             <t t-if="widget.pos.config.enable_cart_detail">
                 <line>
                     <left>مجموع الوحدات</left>
@@ -747,8 +747,8 @@
                     <right><value><t t-esc="receipt.no_of_item" /></value></right>
                 </line>
             </t>
-        </t>
-         <t t-jquery=".before-footer" t-operation="before">
+        </xpath>
+        <xpath expr="//[hasclass(before-footer)]"  t-operation="before">
             <t t-if="widget.pos.config.enable_debit">
                 <div t-if="receipt.debt_before or receipt.debt_after" class="debt">
                     <t t-set="debt_label" t-value="receipt.debt_type=='debt' and 'Debt' or 'Credits'"/>
@@ -763,14 +763,14 @@
                     </line>
                 </div>
             </t>
-        </t>
-        <t t-jquery="[t-esc='receipt.name']" t-operation="replace">
+        </xpath>
+        <xpath expr="//[@t-esc='receipt.name']" t-operation="replace">
     		<t t-esc="receipt.ref ? receipt.ref : receipt.name" />
-    	</t>
-    	<t t-jquery="[t-esc='receipt.date.localestring']" t-operation="replace">
+    	</xpath>
+    	<xpath expr="//[@t-esc='receipt.date.localestring']" t-operation="replace">
     		<t t-esc="receipt.date_order ? receipt.date_order : receipt.date.localestring" />
-    	</t>
-        <t t-jquery="[t-foreach='paymentlines']" t-operation="replace">
+    	</xpath>
+        <xpath expr="//[@t-foreach='paymentlines']" t-operation="replace">
     		<t t-if="receipt.reprint_payment">
     			<t t-foreach='receipt.reprint_payment' t-as='line'>
                     <line>
@@ -790,12 +790,12 @@
             	</t>
             </t>
             <br/>
-    	</t>
+    	</xpath>
     </t>
 
     <!-- Stock Avail module -->
     <t t-extend="Product" name="ProductStockWidget">
-        <t t-jquery="div.product-img" t-operation="replace">
+        <xpath expr="//div[hasclass(product-img)]" t-operation="replace">
             <div class="product-img">
                 <img t-att-src='image_url' /> 
                 <t t-if="!product.to_weight">
@@ -843,12 +843,12 @@
                     </t>  
                 </t>
             </div>        
-        </t>
-        <t t-jquery="div.header-button-name" t-operation="replace">
+        </xpath>
+        <xpath expr="//div[hasclass(header-button-name)]" t-operation="replace">
             <div class="product-name" style="font-size:15px;text-align:right;">
                 <t t-esc="product.display_name"/>
             </div>
-        </t>
+        </xpath>
     </t>
 
     <!--Order List-->
@@ -1022,11 +1022,11 @@
     </t>
 
     <t t-extend="ReceiptScreenWidget">
-        <t t-jquery="div.button.print" t-operation="after">
+        <xpath expr="//div[contains(@class, 'button') and contains(@class, 'print')]" t-operation="after">
             <div class="button print_pdf">
                 <i class='fa fa-print'></i> Print Qweb
             </div>
-        </t>
+        </xpath>
     </t>
 
 </templates>
