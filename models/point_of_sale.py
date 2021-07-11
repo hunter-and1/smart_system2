@@ -125,11 +125,11 @@ class PosConfig(models.Model):
                 'code': 'TDEBT',
                 'type': 'cash',
                 'debt': True,
-                'journal_user': True,
-                'sequence_id': new_sequence.id,
+                # 'journal_user': True,
+                'sequence': new_sequence.id,
                 'company_id': user.company_id.id,
-                'default_debit_account_id': debt_account.id,
-                'default_credit_account_id': debt_account.id,
+                'payment_debit_account_id': debt_account.id,
+                'payment_credit_account_id': debt_account.id,
             })
             self.env['ir.model.data'].create({
                 'name': 'debt_journal_' + str(debt_journal.id),
@@ -141,7 +141,7 @@ class PosConfig(models.Model):
 
         config = self
         config.write({
-            'journal_ids': [(4, debt_journal.id)],
+            'journal_id': debt_journal.id,
             'debt_dummy_product_id': self.env.ref('smart_system2.product_pay_debt').id,
         })
 
