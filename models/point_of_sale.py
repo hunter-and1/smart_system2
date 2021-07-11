@@ -20,16 +20,17 @@
 ##############################################################################
 
 import logging
-from openerp import models, fields, api, tools, _
+from odoo import models, fields, api, tools, _
 from odoo.exceptions import UserError
 import odoo.addons.decimal_precision as dp
 from datetime import datetime, timedelta
-from openerp.tools import float_is_zero
+from odoo.tools import float_is_zero
 import pytz
 import time
 import psycopg2
 from pytz import timezone
 _logger = logging.getLogger(__name__)
+
 
 class PosConfig(models.Model):
     _inherit = 'pos.config'
@@ -417,19 +418,19 @@ class PosConfiguration(models.TransientModel):
         string='Default Max Debt', digits=dp.get_precision('Account'), default=0,
         help='Default value for new Customers')
 
-    def set_debt_type(self):
-        self.env["ir.config_parameter"].set_param("smart_system2.debt_type", self.debt_type)
-
-    def get_default_debt_type(self, fields):
-        debt_type = self.env["ir.config_parameter"].get_param("smart_system2.debt_type", default='debt')
-        return {'debt_type': debt_type}
-
-    def set_debt_limit(self):
-        self.env["ir.config_parameter"].set_param("smart_system2.debt_limit", str(self.debt_limit))
-
-    def get_default_debt_limit(self, fields):
-        debt_limit = self.env["ir.config_parameter"].get_param("smart_system2.debt_limit", default=0)
-        return {'debt_limit': debt_limit}
+    # def set_debt_type(self):
+    #     self.env["ir.config_parameter"].set_param("smart_system2.debt_type", self.debt_type)
+    #
+    # def get_default_debt_type(self, fields):
+    #     debt_type = self.env["ir.config_parameter"].get_param("smart_system2.debt_type", default='debt')
+    #     return {'debt_type': debt_type}
+    #
+    # def set_debt_limit(self):
+    #     self.env["ir.config_parameter"].set_param("smart_system2.debt_limit", str(self.debt_limit))
+    #
+    # def get_default_debt_limit(self, fields):
+    #     debt_limit = self.env["ir.config_parameter"].get_param("smart_system2.debt_limit", default=0)
+    #     return {'debt_limit': debt_limit}
 
 class GroupByExtra(models.AbstractModel):
     _name = "base_groupby_extra"

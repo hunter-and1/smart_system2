@@ -24,5 +24,4 @@ from . import res_partner
 from . import wizard_debt_history
 from . import wizard_profit_margin
 from . import wizard_customers_debts
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

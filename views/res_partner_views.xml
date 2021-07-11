@@ -7,7 +7,7 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="account.view_partner_property_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='name']" position="after">
+                <xpath expr="//field[@name='vat']" position="after">
                     <field name="debt_type" invisible="1"/>
                     <field name="debt" attrs="{'invisible': [('debt_type', '!=', 'debt')]}"/>
                     <field name="credit_balance" attrs="{'invisible': [('debt_type', '!=', 'credit')]}"/>
@@ -40,10 +40,10 @@
                     <field name="debt" attrs="{'invisible': [('debt_type', '!=', 'debt')]}"/>
                     <field name="credit_balance" attrs="{'invisible': [('debt_type', '!=', 'credit')]}"/>
                 </xpath>
-                <!--<xpath expr="//div[@class='oe_kanban_details']//ul" position="inside">-->
-                    <!--<li t-if="record.debt_type.raw_value == 'debt' and record.debt.raw_value">Debt: <field name="debt"/></li>-->
-                    <!--<li t-if="record.debt_type.raw_value == 'credit' and record.credit_balance.raw_value">Credit: <field name="credit_balance"/></li>-->
-                <!--</xpath>-->
+                <xpath expr="//div[hasclass('oe_kanban_details')]//ul" position="inside">
+                    <li t-if="record.debt_type.raw_value == 'debt' and record.debt.raw_value">Debt: <field name="debt"/></li>
+                    <li t-if="record.debt_type.raw_value == 'credit' and record.credit_balance.raw_value">Credit: <field name="credit_balance"/></li>
+                </xpath>
             </field>
         </record>
         

@@ -77,6 +77,7 @@
 
     <t t-extend="ClientDetails">
         <xpath expr="//[hasclass('client-details-right')]" t-operation="append">
+
             <t t-if= "widget.pos.config.enable_debit">
                 <div t-if="partner.debt_type == 'debt'" class="client-detail">
                     <span class='label'>دين</span>
@@ -91,7 +92,7 @@
                     </span>
                 </div>
             </t>
-        </t>
+        </xpath>
         <xpath expr="//[hasclass('client-details-box')]" t-operation="after">
             <t t-if= "widget.pos.config.enable_debit">
                 <div id="loading_history" class="o_spinner oe_hidden"><i class="fa fa-spinner fa-spin fa-4"/></div>
@@ -554,7 +555,7 @@
                             <div class="pos-disc-font">
                                 With a <t t-esc="orderline.get_discount()"/>% خصم
                             </div>
-                        </xpath>
+                        </t>
                     </td>
                     <td class="pos-right-align">
                         <t t-esc="orderline.get_quantity_str_with_unit()"/>

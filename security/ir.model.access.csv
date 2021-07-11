@@ -1,2 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_report_pos_debt,access.report.pos.debt,model_report_pos_debt,base.group_user,1,1,1,1
+access_wizard_debt_history,access_wizard_debt_history,model_wizard_debt_history,base.group_user,1,0,0,0
+access_wizard_profit_margin,access_wizard_profit_margin,model_wizard_profit_margin,base.group_user,1,0,0,0
+access_wizard_customers_debts,access_wizard_customers_debts,model_wizard_customers_debts,base.group_user,1,0,0,0

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
     <data>
 
         <record id="paperformat_pos_receipt" model="report.paperformat">
@@ -18,48 +18,96 @@
             <field name="dpi">130</field>
         </record>
 
-        <report
-            id="action_report_pos_session_summary"
-            string="Session Summary"
-            model="pos.session"
-            report_type="qweb-pdf"
-            name="smart_system2.report_sessionsummary"
-            file="smart_system2.report_sessionsummary"
-         />
+        <record id="action_report_pos_session_summary" model="ir.actions.report">
+            <field name="name">Session Summary</field>
+            <field name="model">pos.session</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">smart_system2.report_sessionsummary</field>
+            <field name="report_file">smart_system2.report_sessionsummary</field>
+            <!--<field name="binding_model_id" ref="model_ir_module_module"/>-->
+            <!--<field name="binding_type">report</field>-->
+        </record>
 
-        <report
-            id="report_pos_receipt"
-            string="Receipt"
-            model="pos.order"
-            report_type="qweb-pdf"
-            name="smart_system2.pos_receipt_report_template"
-            menu="True"
-            paperformat="smart_system2.paperformat_pos_receipt"
-        />
+        <!--<report-->
+            <!--id="action_report_pos_session_summary"-->
+            <!--string="Session Summary"-->
+            <!--model="pos.session"-->
+            <!--report_type="qweb-pdf"-->
+            <!--name="smart_system2.report_sessionsummary"-->
+            <!--file="smart_system2.report_sessionsummary"-->
+         <!--/>-->
 
-        <report
-            id="report_customers_debts"
-            model="wizard.customers.debts"
-            string="Customers Debts"
-            report_type="qweb-pdf"
-            name="smart_system2.report_customers_debts_template"
-        />
+        <record id="report_pos_receipt" model="ir.actions.report">
+            <field name="name">Receipt</field>
+            <field name="model">pos.order</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">smart_system2.pos_receipt_report_template</field>
+            <field name="report_file">smart_system2.pos_receipt_report_template</field>
+            <field name="paperformat_id" ref="smart_system2.paperformat_pos_receipt"/>
+            <field name="binding_model_id" ref="model_pos_order"/>
+            <field name="binding_type">report</field>
+        </record>
 
-        <report
-            id="report_smart_debt_history"
-            model="wizard.debt.history"
-            string="Debt History"
-            report_type="qweb-pdf"
-            name="smart_system2.report_debt_history_template"
-        />
+        <!--<report-->
+            <!--id="report_pos_receipt"-->
+            <!--string="Receipt"-->
+            <!--model="pos.order"-->
+            <!--report_type="qweb-pdf"-->
+            <!--name="smart_system2.pos_receipt_report_template"-->
+            <!--menu="True"-->
+            <!--paperformat="smart_system2.paperformat_pos_receipt"-->
+        <!--/>-->
 
-        <report
-            id="report_smart_profit_margin"
-            model="wizard.profit.margin"
-            string="Profit Margin"
-            report_type="qweb-pdf"
-            name="smart_system2.report_profit_margin_template"
-        />
+        <record id="report_customers_debts" model="ir.actions.report">
+            <field name="name">Customers Debts</field>
+            <field name="model">wizard.customers.debts</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">smart_system2.report_customers_debts_template</field>
+            <field name="report_file">smart_system2.report_customers_debts_template</field>
+            <!--<field name="binding_model_id" ref="model_ir_module_module"/>-->
+            <!--<field name="binding_type">report</field>-->
+        </record>
+        <!--<report-->
+            <!--id="report_customers_debts"-->
+            <!--model="wizard.customers.debts"-->
+            <!--string="Customers Debts"-->
+            <!--report_type="qweb-pdf"-->
+            <!--name="smart_system2.report_customers_debts_template"-->
+        <!--/>-->
+
+        <record id="report_smart_debt_history" model="ir.actions.report">
+            <field name="name">Debt History</field>
+            <field name="model">wizard.debt.history</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">smart_system2.report_debt_history_template</field>
+            <field name="report_file">smart_system2.report_debt_history_template</field>
+            <!--<field name="binding_model_id" ref="model_ir_module_module"/>-->
+            <!--<field name="binding_type">report</field>-->
+        </record>
+        <!--<report-->
+            <!--id="report_smart_debt_history"-->
+            <!--model="wizard.debt.history"-->
+            <!--string="Debt History"-->
+            <!--report_type="qweb-pdf"-->
+            <!--name="smart_system2.report_debt_history_template"-->
+        <!--/>-->
+
+        <record id="report_smart_profit_margin" model="ir.actions.report">
+            <field name="name">Profit Margin</field>
+            <field name="model">wizard.profit.margin</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">smart_system2.report_profit_margin_template</field>
+            <field name="report_file">smart_system2.report_profit_margin_template</field>
+            <!--<field name="binding_model_id" ref="model_ir_module_module"/>-->
+            <!--<field name="binding_type">report</field>-->
+        </record>
+        <!--<report-->
+            <!--id="report_smart_profit_margin"-->
+            <!--model="wizard.profit.margin"-->
+            <!--string="Profit Margin"-->
+            <!--report_type="qweb-pdf"-->
+            <!--name="smart_system2.report_profit_margin_template"-->
+        <!--/>-->
 
     </data>
-</openerp>
+</odoo>

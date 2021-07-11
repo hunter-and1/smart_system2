@@ -21,6 +21,7 @@
 
 from openerp import models, fields, api, _
 import odoo.addons.decimal_precision as dp
+from odoo.exceptions import UserError
 
 
 class ResPartner(models.Model):
