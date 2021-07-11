@@ -1,14 +1,23 @@
 odoo.define('smart_system2.popups', function (require) {
     "use strict";
 
-    var PopupWidget = require('point_of_sale.popups');
-    var DataModel = require('web.DataModel');
-    var gui     = require('point_of_sale.gui');
-    var db = require('point_of_sale.DB');
+    //const PopupWidget = require('point_of_sale.popups');
+    const PosComponent  = require('point_of_sale.PosComponent');
+    const AbstractAwaitablePopup =    require('point_of_sale.AbstractAwaitablePopup');
+    const Registries = require('point_of_sale.Registries');
+    const ProductItem = require('point_of_sale.ProductItem');
+    const ProductScreen = require('point_of_sale.ProductScreen');
 
-    var PayDebtPopupWidget = PopupWidget.extend({
-        template: 'PayDebtPopupWidget',
-        show: function(options){
+    const DataModel = require('web.DataModel');
+    const gui     = require('point_of_sale.gui');
+    //const db = require('point_of_sale.DB');
+
+    /* ------------- */
+    class PayDebtPopupWidget extends AbstractAwaitablePopup {
+        constructor() {
+            super(...arguments);
+        }
+        show(options){
         	var self = this;
         	var partners_list = [];
         	self.pay_full_debt = false;
@@ -48,8 +57,9 @@ odoo.define('smart_system2.popups', function (require) {
                 	return false;
             	}
         	});
-        },
-        click_confirm: function(){
+        }
+
+        click_confirm(){
         	var self = this;
         	var order = self.pos.get_order();
         	var client = self.pos.get_client();
@@ -75,16 +85,14 @@ odoo.define('smart_system2.popups', function (require) {
         		alert("Something went to wrong!");
         		$('input#pay_debit_customer').focus();
         	}
-        },
-    });
-    gui.define_popup({name:'PayDebtPopupWidget', widget: PayDebtPopupWidget});
-
-    var AddProductPopup = PopupWidget.extend({
-        template: 'AddProductPopup',
-        renderElement: function(){
-            var self = this;
-            self._super();
-            var namelist = self.pos.db.get_products_name();
+        }
+    }
+    PayDebtPopupWidget.template = 'PayDebtPopupWidget';
+    Registries.Component.add(PayDebtPopupWidget);
+    /* ------------- */
+    class AddProductPopup extends AbstractAwaitablePopup {
+        renderElement(){
+            let namelist = this.pos.db.get_products_name();
             $("#sale_price").keypress(function (e) {
                 if (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57) && e.which != 46) {
                     return false;
@@ -101,12 +109,13 @@ odoo.define('smart_system2.popups', function (require) {
                 });
                 e.stopPropagation();
             });
-        },
-        show: function(options){
+        }
+
+        show(options){
             var self = this;
             self.events['click .button.saveclose'] = 'click_saveclose';
             self.events['click .button.savenew'] = 'click_savenew';
-            this._super();
+            //this._super();
             this.renderElement();
             $('#search').focus();
             this.product_id = 0;
@@ -184,9 +193,6 @@ odoo.define('smart_system2.popups', function (require) {
                                             $('table.product-input-table input.ean13').val(val);
                                             $('table.product-input-table input.internal_reference').val(val);
                                             $('table.product-input-table input.cost_price').val('');
-        //                                  $('table.product-input-table select.pos_category').val('');
-        //                                  $('table.product-input-table select.internal_category').val('');
-
                                             $('table.product-input-table input.name').focus();
                                             $('#search').val("");
                                     }else{
@@ -200,25 +206,28 @@ odoo.define('smart_system2.popups', function (require) {
                         if($(this).val() == ""){
                             self.product_id = 0;
                             $('table.product-input-table input').val("");
-//                          $('table.product-input-table select').val("");
                         }
                     }
                 }
             });
-        },
-        click_saveclose: function(){
+        }
+
+        click_saveclose(){
             var self = this;
             if(this._save_product(self.product_id)){
                 this.gui.close_popup();
             }
-        },
-        click_savenew: function(){
+        }
+
+        click_savenew(){
             this._save_product(self.product_id);
-        },
-        click_cancel: function(){
+        }
+
+        click_cancel(){
             this.gui.close_popup();
-        },
-        _save_product : function(product_id){
+        }
+
+        _save_product(product_id){
             var self = this;
             var name = $('table.product-input-table input.name').val();
             var list_price = $('table.product-input-table input.sale_price').val();
@@ -291,14 +300,15 @@ odoo.define('smart_system2.popups', function (require) {
                 alert("Product name is required");
                 return false;
             }
-        },
-    });
-    gui.define_popup({name:'add_product_popup', widget: AddProductPopup});
+        }
+    }
+    AddProductPopup.template = 'AddProductPopup';
+    Registries.Component.add(AddProductPopup);
+    
+    /* ------------- */
+    class ProductNotePopupWidget extends AbstractAwaitablePopup {
 
-    /*ADD NOTE POPUP*/
-    var ProductNotePopupWidget = PopupWidget.extend({
-        template: 'ProductNotePopupWidget',
-        show: function(options){
+        show(options){
             options = options || {};
             this._super(options);
 
@@ -307,25 +317,27 @@ odoo.define('smart_system2.popups', function (require) {
             var selected_line = order.get_selected_orderline();
             $('textarea#textarea_note').focus();
             $('textarea#textarea_note').html(selected_line.get_line_note());
-        },
-        click_confirm: function(){
+        }
+
+        click_confirm(){
             var order    = this.pos.get_order();
             var selected_line = order.get_selected_orderline();
             var value = this.$('#textarea_note').val();
             selected_line.set_line_note(value);
             this.gui.close_popup();
-        },
-        renderElement: function() {
+        }
+
+        renderElement() {
             var self = this;
             this._super();
-        },
-        
-    });
-    gui.define_popup({name:'add_note_popup', widget: ProductNotePopupWidget});
+        }
+    }
+    ProductNotePopupWidget.template = 'ProductNotePopupWidget';
+    Registries.Component.add(ProductNotePopupWidget);
+    /* ------------- */
+    class StockLocationPopup extends AbstractAwaitablePopup {
 
-    var StockLocationPopup = PopupWidget.extend({
-        template: 'StockLocationPopup',
-        show: function(options){
+        show(options){
             options = options || {};
             this._super(options);
             var self = this;
@@ -344,8 +356,9 @@ odoo.define('smart_system2.popups', function (require) {
             var order    = this.pos.get_order();
             var selected_line = order.get_selected_orderline();
             $('#stock_location').focus();
-        },
-        click_confirm: function(){
+        }
+
+        click_confirm(){
             var self = this;
             var order_container_width = $('.order-container').width();
     		var order_container_height = $('.order-container').height();
@@ -364,26 +377,28 @@ odoo.define('smart_system2.popups', function (require) {
             $('.order-container').css('z-index','1000');
         	$('.order-container').css('border', '4px solid #6d6b6b');
         	$('.order').css('max-width','100%');
-        },
-        renderElement: function() {
+        }
+
+        renderElement() {
             var self = this;
             this._super();
-        },
-    });
-    gui.define_popup({name:'stock_loction_popup', widget: StockLocationPopup});
-
-    /* Product POPUP */
-	var ProductPopup = PopupWidget.extend({
-	    template: 'ProductPopup',
-	    show: function(options){
+        }
+    }
+    StockLocationPopup.template = 'StockLocationPopup';
+    Registries.Component.add(StockLocationPopup);
+    /* ------------- */
+    class ProductPopup extends AbstractAwaitablePopup {
+        
+        show(options){
 	    	var self = this;
 			this._super();
 			this.product_list = options.product_list || "";
 			this.order_id = options.order_id || "";
 			this.state = options.state || "";
 			this.renderElement();
-	    },
-	    click_confirm: function(){
+	    }
+
+	    click_confirm(){
 	        if (this.state == "paid" || this.state == "done"){
                 $( "#re_order_duplicate" ).data("id",self.order_id);
     			$( "#re_order_duplicate" ).trigger("click");
@@ -392,11 +407,22 @@ odoo.define('smart_system2.popups', function (require) {
                 $( "#re_order" ).trigger("click");
 			}
 			this.gui.close_popup();
-	    },
-    	click_cancel: function(){
+	    }
+    	click_cancel(){
     		this.gui.close_popup();
     	}
+    }
 
-	});
-	gui.define_popup({name:'product_popup', widget: ProductPopup});
+    ProductPopup.template = 'ProductPopup';
+    Registries.Component.add(ProductPopup);
+    
+    /* ------------- */
+    return {
+        PayDebtPopupWidget,
+        AddProductPopup,
+        ProductNotePopupWidget,
+        StockLocationPopup,
+        ProductPopup
+    };
+
 });

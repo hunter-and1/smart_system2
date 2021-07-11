@@ -51,10 +51,9 @@ odoo.define('smart_system2.db', function (require) {
                     this.product_by_tmpl_id[product.product_tmpl_id] = product;
                 }
             }
-            for(var i = 0, len = products.length; i < len; i++){
-                var product = products[i];
-                console.log('\n\n======list', product)
-                var unit_name = product.uom_id[1] ? product.uom_id[1] : "";
+            for(let i = 0, len = products.length; i < len; i++){
+                let product = products[i];
+                let unit_name = product.uom_id[1] ? product.uom_id[1] : "";
                 if(product['list_price']) {
                     product['price'] = product['list_price']
                     if(product.to_weight){
@@ -70,7 +69,7 @@ odoo.define('smart_system2.db', function (require) {
                         $("[data-product-id='"+product.id+"']").find('.cost_price-tag').html(symbol+" "+product['standard_price'].toFixed(2));
                     }
                 }
-                /*
+               
                 if(product.to_weight){
                     $("[data-product-id='"+product.id+"']").find('.qty_disp').html(product['qty_available'].toFixed(2)+'/'+unit_name);
                     if(product['qty_available'] < 0){
@@ -85,7 +84,7 @@ odoo.define('smart_system2.db', function (require) {
                     } else {
                         $("[data-product-id='"+product.id+"']").find('.qty_disp').removeClass('product-qty-low').addClass('product-qty');
                     }
-                } */
+                }  
             }
         },
         get_product_by_name: function(name){
@@ -134,6 +133,7 @@ odoo.define('smart_system2.db', function (require) {
             }
         },
         add_orders: function(orders){
+            console.log('dfdf');
             var updated_count = 0;
             var new_write_date = '';
             for(var i = 0, len = orders.length; i < len; i++){
