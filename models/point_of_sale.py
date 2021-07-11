@@ -259,8 +259,9 @@ class pos_order(models.Model):
             journal_ids = set()
             for payments in pos_order['statement_ids']:
                 if not float_is_zero(payments[2]['amount'], precision_digits=prec_acc):
-                    order.add_payment(self._payment_fields(payments[2]))
-                journal_ids.add(payments[2]['journal_id'])
+                    order.add_payment(self._payment_fields(order,payments[2]))
+                print('\n\n=======',payments[2])
+                journal_ids.add(payments[2].get('journal_id'))
 
             if pos_session.sequence_number <= pos_order['sequence_number']:
                 pos_session.write({'sequence_number': pos_order['sequence_number'] + 1})
@@ -360,7 +361,7 @@ class pos_order(models.Model):
                         _logger.error('Could not fully process the POS Order: %s', tools.ustr(e))
 
     @api.model
-    def create_from_ui(self, orders):
+    def create_from_ui(self, orders, draft=False):
         # Keep only new orders
         submitted_references = [o['data']['name'] for o in orders]
         pos_order = self.search([('pos_reference', 'in', submitted_references)])
