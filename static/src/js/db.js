@@ -32,12 +32,11 @@ odoo.define('smart_system2.db', function (require) {
             return this.all_categories;
         },
         add_products: function(products){
-            var self = this;
             this._super.apply(this, arguments);
-            var new_write_date = '';
-            var symbol = this.currency_symbol ? this.currency_symbol.symbol : "$";
-            for(var i = 0, len = products.length; i < len; i++){
-                var product = products[i];
+            let new_write_date = '';
+            let symbol = this.currency_symbol ? this.currency_symbol.symbol : "$";
+            for(let i = 0, len = products.length; i < len; i++){
+                let product = products[i];
                 if ( new_write_date < product.write_date ) {
                     new_write_date  = product.write_date;
                 }
@@ -49,9 +48,12 @@ odoo.define('smart_system2.db', function (require) {
                     this.product_by_tmpl_id[product.product_tmpl_id] = product;
                 }
             }
-            for(var i = 0, len = products.length; i < len; i++){
-                var product = products[i];
-                var unit_name = product.uom_id[1] ? product.uom_id[1] : "";
+            
+            for(let i = 0, len = products.length; i < len; i++){
+                let product = products[i];
+                let unit_name = product.uom_id[1] ? product.uom_id[1] : "";
+                console.log(product);
+               
                 if(product['list_price']) {
                     product['price'] = product['list_price']
                     if(product.to_weight){
@@ -67,6 +69,7 @@ odoo.define('smart_system2.db', function (require) {
                         $("[data-product-id='"+product.id+"']").find('.cost_price-tag').html(symbol+" "+product['standard_price'].toFixed(2));
                     }
                 }
+                /* 
                 if(product.to_weight){
                     $("[data-product-id='"+product.id+"']").find('.qty_disp').html(product['qty_available'].toFixed(2)+'/'+unit_name);
                     if(product['qty_available'] < 0){
@@ -81,7 +84,7 @@ odoo.define('smart_system2.db', function (require) {
                     } else {
                         $("[data-product-id='"+product.id+"']").find('.qty_disp').removeClass('product-qty-low').addClass('product-qty');
                     }
-                }
+                } */
             }
         },
         get_product_by_name: function(name){
@@ -102,15 +105,6 @@ odoo.define('smart_system2.db', function (require) {
         get_product_write_date: function(){
             return this.product_write_date || "1970-01-01 00:00:00";
         },
-        /* 
-        *
-        * Bootstrap Alert Message
-        * - The below function is working as a notification like Javascript alert()
-        * @param type This param contains type of notification that user wants.
-        * type param value may be success, warning, info, danger
-        * message This param contains string for printing text in alert.
-        * 
-        */
         notification: function(type, message){
             var types = ['success','warning','info', 'danger'];
             if($.inArray(type.toLowerCase(),types) != -1){
@@ -143,14 +137,6 @@ odoo.define('smart_system2.db', function (require) {
             var new_write_date = '';
             for(var i = 0, len = orders.length; i < len; i++){
                 var order = orders[i];
-//                if (    this.order_write_date &&
-////                        this.order_by_id[order.id] &&
-//                        new Date(this.order_write_date).getTime() >=
-//                        new Date(order.write_date).getTime() ) {
-//                    continue;
-//                } else if ( new_write_date < order.write_date ) {
-//                    new_write_date  = order.write_date;
-//                }
                 if (!this.order_by_id[order.id]) {
                     this.order_sorted.push(order.id);
                 }
