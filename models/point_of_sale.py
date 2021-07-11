@@ -30,7 +30,7 @@ import time
 import psycopg2
 from pytz import timezone
 _logger = logging.getLogger(__name__)
-
+import dateutil
 
 class PosConfig(models.Model):
     _inherit = 'pos.config'
@@ -418,19 +418,21 @@ class PosConfiguration(models.TransientModel):
         string='Default Max Debt', digits=dp.get_precision('Account'), default=0,
         help='Default value for new Customers')
 
-    # def set_debt_type(self):
-    #     self.env["ir.config_parameter"].set_param("smart_system2.debt_type", self.debt_type)
-    #
-    # def get_default_debt_type(self, fields):
-    #     debt_type = self.env["ir.config_parameter"].get_param("smart_system2.debt_type", default='debt')
-    #     return {'debt_type': debt_type}
-    #
-    # def set_debt_limit(self):
-    #     self.env["ir.config_parameter"].set_param("smart_system2.debt_limit", str(self.debt_limit))
-    #
-    # def get_default_debt_limit(self, fields):
-    #     debt_limit = self.env["ir.config_parameter"].get_param("smart_system2.debt_limit", default=0)
-    #     return {'debt_limit': debt_limit}
+    @api.model
+    def get_values(self):
+        res = super(PosConfiguration, self).get_values()
+
+        res['debt_type'] = self.env['ir.config_parameter'].sudo().get_param('smart_system2.debt_type')
+        res['debt_limit'] = float(
+            self.env['ir.config_parameter'].sudo().get_param('smart_system2.debt_limit', default=0.0))
+        return res
+
+    @api.model
+    def set_values(self):
+        self.env['ir.config_parameter'].sudo().set_param('smart_system2.debt_type', self.debt_type)
+        self.env['ir.config_parameter'].sudo().set_param('smart_system2.debt_limit', self.debt_limit)
+        super(PosConfiguration, self).set_values()
+
 
 class GroupByExtra(models.AbstractModel):
     _name = "base_groupby_extra"

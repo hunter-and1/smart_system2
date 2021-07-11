@@ -58,34 +58,34 @@
             </field>
         </record>
 
-        <!--<record id="res_config_settings_view_form_inherit_point_of_sale_debt" model="ir.ui.view">-->
-            <!--<field name="name">res.config.settings.view.form.inherit.point.of.sale.debt</field>-->
-            <!--<field name="model">res.config.settings</field>-->
-            <!--<field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>-->
-            <!--<field name="arch" type="xml">-->
-                <!--<xpath expr="//div[hasclass('app_settings_block')][@data-key='point_of_sale']" position="inside">-->
-                    <!--<h2>Debt</h2>-->
-                    <!--<div class="row mt16 o_settings_container" name="debt_setting_container">-->
-                        <!--<div class="col-12 col-lg-6 o_setting_box"-->
-                            <!--id="debt_setting"-->
-                            <!--title="">-->
-                            <!--<div class="o_setting_right_pane">-->
-                                <!--<div>-->
-                                    <!--<label string="Debit" for="debt_type"/>-->
-                                    <!--<div class="text-muted">-->
-                                        <!--Debit-->
-                                    <!--</div>-->
-                                    <!--<div class="content-group mt16">-->
-                                        <!--<field name="debt_type" widget="radio"/>-->
-                                        <!--<field name="debt_limit" class="oe_inline"/>-->
-                                    <!--</div>-->
-                                <!--</div>-->
-                            <!--</div>-->
-                        <!--</div>-->
-                    <!--</div>-->
-                <!--</xpath>-->
-            <!--</field>-->
-        <!--</record>-->
+        <record id="res_config_settings_view_form_inherit_point_of_sale_debt" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.point.of.sale.debt</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('app_settings_block')][@data-key='point_of_sale']" position="inside">
+                    <h2>Debt</h2>
+                    <div class="row mt16 o_settings_container" name="debt_setting_container">
+                        <div class="col-12 col-lg-6 o_setting_box"
+                            id="debt_setting"
+                            title="">
+                            <div class="o_setting_right_pane">
+                                <div>
+                                    <label string="Debit" for="debt_type"/>
+                                    <div class="text-muted">
+                                        Debit
+                                    </div>
+                                    <div class="content-group mt16">
+                                        <field name="debt_type" widget="radio"/>
+                                        <field name="debt_limit" class="oe_inline"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
         <!--<record id="view_debt_sale_config_settings_form_pos" model="ir.ui.view">-->
             <!--<field name="name">pos.config.settings.form</field>-->
             <!--<field name="model">pos.config.settings</field>-->
